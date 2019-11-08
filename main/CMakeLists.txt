@@ -1,0 +1,2 @@
+idf_component_register(SRCS "ekg_main.c" "src/ble.c" "src/err.c" "src/ipc.c" "src/msg.c" "src/status.c" "src/tasks/ble_task.c" "src/tasks/led_task.c" "src/tasks/telemetry_task.c"
+                    INCLUDE_DIRS "include" "include/tasks")
