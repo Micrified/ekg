@@ -1,3 +1,14 @@
-# Electrocardigram IoT Application
+# Electrocardiogram IoT Application
 
-A prototype for validating the detection of anomalies in human cardiac behaviour. This application is designed to be used in a limited resource environment, and use edge computing to offload heavier computational tasks to connected devices and the cloud. To realize this, the application uses FreeRTOS to manage IoT resources, and offloads data to a companion Android mobile application
+This project prototypes using an embedded IoT device (ESP32) to detect anomalies in human cardiovascular behavior. It uses machine learning in order to classify EKG patterns, and communicates findings with other devices (i.e. an Android application). The prototype also takes advantage of edge-computing in order to process problems which require more work than appropriate for the embedded application. 
+
+## Hardware
+
+1. ESP32-WROOM-32
+2. Analog Devices AD8232 Heart Rate Monitor
+3. A single LED (optional)
+
+## Software
+
+1. ESP-IDF (Espressif Development Toolchain)
+2. FreeRTOS (bundled with ESP-IDF, so no need to get it separately)

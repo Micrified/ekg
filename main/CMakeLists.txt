@@ -1,0 +1,2 @@
+idf_component_register(SRCS "ekg_main.c" "src/wifi.c" "src/ble.c" "src/err.c" "src/ipc.c" "src/msg.c" "src/status.c" "src/tasks/wifi_task.c" "src/tasks/ble_task.c" "src/http.c" "src/tasks/stream_task.c" "src/tasks/led_task.c" "src/a2dp.c" "src/a2dp/bt_app_core.c" "src/a2dp/bt_app_av.c" "src/tasks/telemetry_task.c"
+                    INCLUDE_DIRS "include" "include/tasks" "include/a2dp")
