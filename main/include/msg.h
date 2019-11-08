@@ -4,17 +4,16 @@
 
 /*
  *******************************************************************************
- *                          (C) Copyright 2019 Somnox                          *
- * Created: 12/09/2019                                                         *
+ *                          (C) Copyright 2019 <None>                          *
+ * Created: 08/11/2019                                                         *
  *                                                                             *
  * Programmer(s):                                                              *
  * - Charles Randolph                                                          *
+ * - Sonnya Dellarosa                                                          *
  *                                                                             *
  * Description:                                                                *
- *  This message describes the communication protocol used for communication o *
- *  ver BLE. More specifically, these messages are transmitted to the ESP usin *
- *  g long-write operations by the connected client, and responses are transmi *
- *  tted back using GATT notification operations (with a smaller payload)      *
+ *  Communication protocol used for exchanging data over BLE. Contains seriali *
+ *  zation and deserialization procedures                                      *
  *                                                                             *
  *******************************************************************************
 */

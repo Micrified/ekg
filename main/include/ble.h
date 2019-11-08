@@ -4,11 +4,12 @@
 
 /*
  *******************************************************************************
- *                          (C) Copyright 2019 Somnox                          *
- * Created: 26/08/2019                                                         *
+ *                          (C) Copyright 2019 <None>                          *
+ * Created: 08/11/2019                                                         *
  *                                                                             *
  * Programmer(s):                                                              *
  * - Charles Randolph                                                          *
+ * - Sonnya Dellarosa                                                          *
  *                                                                             *
  * Description:                                                                *
  *  Wrapper for Bluedroid BLE                                                  *

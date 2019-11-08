@@ -3,15 +3,16 @@
 
 /*
  *******************************************************************************
- *                          (C) Copyright 2019 Somnox                          *
- * Created: 04/10/2019                                                         *
+ *                          (C) Copyright 2019 <None>                          *
+ * Created: 08/11/2019                                                         *
  *                                                                             *
  * Programmer(s):                                                              *
  * - Charles Randolph                                                          *
+ * - Sonnya Dellarosa                                                          *
  *                                                                             *
  * Description:                                                                *
- *  The configuration header holds configurable device information. Examples i *
- *  nclude the device hostname on WiFi, and the name broadcast over BLE        *
+ *  Holds configuration data for the RTOS. This includes BLE identifiers, task *
+ *   memory size, and more                                                     *
  *                                                                             *
  *******************************************************************************
 */

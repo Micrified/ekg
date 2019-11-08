@@ -4,15 +4,16 @@
 
 /*
  *******************************************************************************
- *                          (C) Copyright 2019 Somnox                          *
- * Created: 05/09/2019                                                         *
+ *                          (C) Copyright 2019 <None>                          *
+ * Created: 08/11/2019                                                         *
  *                                                                             *
  * Programmer(s):                                                              *
  * - Charles Randolph                                                          *
+ * - Sonnya Dellarosa                                                          *
  *                                                                             *
  * Description:                                                                *
- *  Defines IPC elements such as queues and message buffers for system-wide ac *
- *  cess                                                                       *
+ *  Defines IPC constructs like queues and message buffers. Designed for syste *
+ *  m-wide access                                                              *
  *                                                                             *
  *******************************************************************************
 */

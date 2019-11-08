@@ -3,14 +3,15 @@
 
 /*
  *******************************************************************************
- *                          (C) Copyright 2019 Somnox                          *
- * Created: 27/08/2019                                                         *
+ *                          (C) Copyright 2019 <None>                          *
+ * Created: 08/11/2019                                                         *
  *                                                                             *
  * Programmer(s):                                                              *
  * - Charles Randolph                                                          *
+ * - Sonnya Dellarosa                                                          *
  *                                                                             *
  * Description:                                                                *
- *  Implements Application Profile Data                                        *
+ *  Implements application profile data                                        *
  *                                                                             *
  *******************************************************************************
 */
@@ -30,13 +31,13 @@
 // 4. Characteristic descriptor handle
 #define GATTS_HANDLE_COUNT_WIFI                     4
 
-// The UUID of the service in the WiFi application profile
+// The UUID of the service in the app application profile
 #define GATTS_SERVICE_UUID_WIFI                     0x00FF
 
-// The UUID for the WiFi characteristic
+// The UUID for the app characteristic
 #define GATTS_CHARACTERISTIC_UUID_WIFI              0xFF01
 
-// The UUID for the WiFi characteristic descriptor (using the standard CCCD type)
+// The UUID for the app characteristic descriptor (using the standard CCCD type)
 #define GATTS_CHARACTERISTIC_DESCRIPTOR_UUID_WIFI   \
 	ESP_GATT_UUID_CHAR_CLIENT_CONFIG
 

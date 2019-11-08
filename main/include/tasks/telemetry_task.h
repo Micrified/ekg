@@ -4,15 +4,16 @@
 
 /*
  *******************************************************************************
- *                          (C) Copyright 2019 Somnox                          *
- * Created: 03/10/2019                                                         *
+ *                          (C) Copyright 2019 <None>                          *
+ * Created: 08/11/2019                                                         *
  *                                                                             *
  * Programmer(s):                                                              *
  * - Charles Randolph                                                          *
+ * - Sonnya Dellarosa                                                          *
  *                                                                             *
  * Description:                                                                *
- *  The telemetry task dispatches POST request periodically to a remote sink.  *
- *  This is set by the user, and the task can be toggled on or off             *
+ *  The telemetry task dispatches data periodically. This can be virtually any *
+ *   type of telemetry, but will be EKG related                                *
  *                                                                             *
  *******************************************************************************
 */

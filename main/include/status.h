@@ -4,16 +4,15 @@
 
 /*
  *******************************************************************************
- *                          (C) Copyright 2019 Somnox                          *
- * Created: 03/10/2019                                                         *
+ *                          (C) Copyright 2019 <None>                          *
+ * Created: 08/11/2019                                                         *
  *                                                                             *
  * Programmer(s):                                                              *
  * - Charles Randolph                                                          *
+ * - Sonnya Dellarosa                                                          *
  *                                                                             *
  * Description:                                                                *
- *  Holds a function for dispatching a status message. This functionality is u *
- *  sed across several tasks, so it makes sense to dedicate a source file for  *
- *  it                                                                         *
+ *  Holds function for quickly dispatching status messages                     *
  *                                                                             *
  *******************************************************************************
 */

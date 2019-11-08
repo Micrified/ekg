@@ -4,14 +4,15 @@
 
 /*
  *******************************************************************************
- *                          (C) Copyright 2019 Somnox                          *
- * Created: 05/09/2019                                                         *
+ *                          (C) Copyright 2019 <None>                          *
+ * Created: 08/11/2019                                                         *
  *                                                                             *
  * Programmer(s):                                                              *
  * - Charles Randolph                                                          *
+ * - Sonnya Dellarosa                                                          *
  *                                                                             *
  * Description:                                                                *
- *  Defines Event Group Flags for system-wide signaling                        *
+ *  Describes event group flags for system-wide signaling                      *
  *                                                                             *
  *******************************************************************************
 */

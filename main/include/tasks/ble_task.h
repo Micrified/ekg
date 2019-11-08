@@ -4,18 +4,18 @@
 
 /*
  *******************************************************************************
- *                          (C) Copyright 2019 Somnox                          *
- * Created: 30/09/2019                                                         *
+ *                          (C) Copyright 2019 <None>                          *
+ * Created: 08/11/2019                                                         *
  *                                                                             *
  * Programmer(s):                                                              *
  * - Charles Randolph                                                          *
+ * - Sonnya Dellarosa                                                          *
  *                                                                             *
  * Description:                                                                *
- *  Header for the Bluetooth Low Energy Task. This task interfaces with the un *
- *  derlying BLE driver task and allows other tasks to be notified of changes  *
- *  to the connection state. It also is responsible for writing messages to th *
- *  e GATT characteristic and processing messages sent from the connected devi *
- *  ce                                                                         *
+ *  Header for the BLE task. This task interfaces with the BLE driver task and *
+ *   notifies other tasks of changes to the connection state. It is also respo *
+ *  nsible for writing messages to the GATT characteristic and processing mess *
+ *  ages sent from the connected device                                        *
  *                                                                             *
  *******************************************************************************
 */

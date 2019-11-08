@@ -4,19 +4,18 @@
 
 /*
  *******************************************************************************
- *                          (C) Copyright 2019 Somnox                          *
- * Created: 04/09/2019                                                         *
+ *                          (C) Copyright 2019 <None>                          *
+ * Created: 08/11/2019                                                         *
  *                                                                             *
  * Programmer(s):                                                              *
  * - Charles Randolph                                                          *
+ * - Sonnya Dellarosa                                                          *
  *                                                                             *
  * Description:                                                                *
- *  Common functions and macros for abstracting frequently repeated control pa *
- *  tterns                                                                     *
+ *  Common functions and macros for error-handling patterns                    *
  *                                                                             *
  *******************************************************************************
 */
-
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
