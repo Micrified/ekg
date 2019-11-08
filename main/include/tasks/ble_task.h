@@ -37,34 +37,6 @@
 */
 
 
-// Holds the WiFi SSID for all tasks to access (external ref to esp32_wifi_main)
-extern uint8_t g_wifi_ssid_buffer[];
-
-
-// Holds the WiFi PSWD for all tasks to access (external ref to esp32_wifi_main)
-extern uint8_t g_wifi_pswd_buffer[];
-
-
-// Holds the IPv4 address for telemetry (network byte order)
-extern uint32_t g_telemetry_inet_addr;
-
-
-// Holds the port for telemetry data to be sent over (network byte order)
-extern uint16_t g_telemetry_inet_port;
-
-
-// Holds the IPv4 address for the data stream (network byte order)
-extern uint32_t g_stream_inet_addr;
-
-
-// Holds the port for the data stream to be sent over (network byte order)
-extern uint16_t g_stream_inet_port;
-
-
-// Holds the path for the data stream GET request
-extern uint8_t g_stream_url_path[64 + 1];
-
-
 /*
  *******************************************************************************
  *                            Function Declarations                            *

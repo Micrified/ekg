@@ -19,13 +19,10 @@
 
 
 #include <inttypes.h>
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
 #include <stdio.h>
 #include <string.h>
 #include "tasks.h"
 #include "status.h"
-#include "http.h"
 
 
 /*
@@ -33,14 +30,6 @@
  *                              Global Variables                               *
  *******************************************************************************
 */
-
-
-// Holds the IPv4 address for telemetry (network byte order)
-uint32_t g_telemetry_inet_addr;
-
-
-// Holds the port for telemetry data to be sent over (network byte order)
-uint16_t g_telemetry_inet_port;
 
 
 // Global state flag (may be subject race conditions | see msg.h for bits)

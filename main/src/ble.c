@@ -226,7 +226,7 @@ esp_err_t ble_init (void) {
     }
 
     // Enable controller in BLE mode (dual is ESP_BT_MODE_BTDM)
-    if ((err = esp_bt_controller_enable(ESP_BT_MODE_BTDM)) != ESP_OK) {
+    if ((err = esp_bt_controller_enable(ESP_BT_MODE_BLE)) != ESP_OK) {
         ESP_LOGE("BLE-Driver", "Enable BLE dual mode failed: %s", E2S(err));
         goto end;
     }

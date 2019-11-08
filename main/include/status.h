@@ -56,12 +56,13 @@
 */
 
 
-// Holds the WiFi IP address (network byte order)
-extern uint32_t g_wifi_lan_addr;
+// Global state data word
+extern uint32_t g_state_data;
 
 
 // Global state flag (may be subject race conditions | see msg.h for bits)
 extern uint8_t g_state_flag;
+
 
 // Global mutex for controlled access to the state flag
 extern portMUX_TYPE g_state_mutex;

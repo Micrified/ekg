@@ -11,25 +11,6 @@
 // Processes instructions received in a message
 void instruction_handler (uint8_t instruction) {
     switch (instruction) {
-        case INST_WIFI_ENABLE: {
-            xEventGroupSetBits(g_event_group, FLAG_WIFI_START);
-        }
-        break;
-
-        case INST_WIFI_DISABLE: {
-            xEventGroupSetBits(g_event_group, FLAG_WIFI_STOP);
-        }
-        break;
-
-        case INST_STREAM_ENABLE: {
-            xEventGroupSetBits(g_event_group, FLAG_STREAM_START);
-        }
-        break;
-
-        case INST_STREAM_DISABLE: {
-            xEventGroupSetBits(g_event_group, FLAG_STREAM_STOP);
-        }
-        break;
 
         case INST_TELEMETRY_ENABLE: {
             xEventGroupSetBits(g_event_group, FLAG_TELEMETRY_START);
@@ -74,61 +55,6 @@ void msg_handler (uint8_t *buffer, size_t size) {
             instruction_handler(inst);
         }
         break;
-
-        // Message with Status message
-        case MSG_TYPE_STATUS: {
-            ESP_LOGI("BLE", "MSG_TYPE_STATUS has no function here");
-        }
-        break;
-
-        // Message with WiFi data
-        case MSG_TYPE_WIFI_DATA: {
-            memcpy(g_wifi_ssid_buffer, msg.body.msg_wifi_data.ssid,
-                32 * sizeof(uint8_t));
-            memcpy(g_wifi_pswd_buffer, msg.body.msg_wifi_data.pswd,
-                64 * sizeof(uint8_t));
-        }
-        break;
-
-        // Message with Stream data
-        case MSG_TYPE_STREAM_DATA: {
-
-            // Update global streaming address, port, and path
-            g_stream_inet_addr = msg.body.msg_stream_data.addr;
-            g_stream_inet_port = msg.body.msg_stream_data.port;
-            memcpy(g_stream_url_path, msg.body.msg_stream_data.path,
-                64 * sizeof(uint8_t));
-
-            // Log for debugging purposes
-            uint8_t b4 = (g_stream_inet_addr >> 24);
-            uint8_t b3 = (g_stream_inet_addr >> 16) & 0xFF;
-            uint8_t b2 = (g_stream_inet_addr >> 8) & 0xFF;
-            uint8_t b1 = (g_stream_inet_addr) & 0xFF;
-            ESP_LOGI("BLE", "Streaming Configuration:\n" \
-                            "ADDR: %d.%d.%d.%d\n" \
-                            "PORT: %u\n" \
-                            "PATH: \"%s\"\n", b4, b3, b2, b1, 
-                            g_stream_inet_port, g_stream_url_path);
-        }
-        break;
-
-        // Message with Telemetry data
-        case MSG_TYPE_TELEMETRY_DATA: {
-            g_telemetry_inet_addr = msg.body.msg_telemetry_data.addr;
-            g_telemetry_inet_port = msg.body.msg_telemetry_data.port;
-
-            // Log for debugging purposes
-            uint8_t b4 = (g_telemetry_inet_addr >> 24);
-            uint8_t b3 = (g_telemetry_inet_addr >> 16) & 0xFF;
-            uint8_t b2 = (g_telemetry_inet_addr >> 8) & 0xFF;
-            uint8_t b1 = (g_telemetry_inet_addr) & 0xFF;
-            ESP_LOGI("BLE", "Telemetry Configuration:\n" \
-                            "ADDR: %d.%d.%d.%d\n" \
-                            "PORT: %u\n", b4, b3, b2, b1, 
-                            g_telemetry_inet_port);
-        }
-        break;
-
 
         default: {
             ESP_LOGW("BLE", "Received unknown message type (%d)",msg.type);

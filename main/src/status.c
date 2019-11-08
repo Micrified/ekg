@@ -13,7 +13,7 @@ void dispatch_status_message (const char *task_tag) {
         esp_err_t err;
         
         // Prepare message
-        msg_t msg = MSG_STATUS(g_state_flag, g_wifi_lan_addr);
+        msg_t msg = MSG_STATUS(g_state_flag, g_state_data);
 
         // Pack message
         size_t z = msg_pack(&msg, msg_buffer);

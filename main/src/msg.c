@@ -10,11 +10,11 @@
 
 // Update this table with new message sizes as necessary
 size_t g_msg_size_tab[MSG_TYPE_MAX] = {
-    [MSG_TYPE_STATUS] = 1 + 4,              // 1B status, 4B addr
-    [MSG_TYPE_WIFI_DATA] = 64 + 32,         // 32-byte SSID + 64-byte PSWD
-    [MSG_TYPE_STREAM_DATA] = 64 + 4 + 2,    // 4B addr, 2B port, 64B path
-    [MSG_TYPE_TELEMETRY_DATA] = 4 + 2,      // 4B addr, 2B port
-    [MSG_TYPE_INSTRUCTION] = 1,             // 1B instruction
+    [MSG_TYPE_STATUS]          = 1 + 4,       // 1B status, 4B addr
+    [MSG_TYPE_WIFI_DATA]       = 64 + 32,     // 32-byte SSID + 64-byte PSWD
+    [MSG_TYPE_STREAM_DATA]     = 64 + 4 + 2,  // 4B addr, 2B port, 64B path
+    [MSG_TYPE_TELEMETRY_DATA]  = 4 + 2,       // 4B addr, 2B port
+    [MSG_TYPE_INSTRUCTION]     = 1,           // 1B instruction
 };
 
 
