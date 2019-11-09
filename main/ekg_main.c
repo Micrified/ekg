@@ -150,61 +150,75 @@ void app_main (void) {
     /****************************** Init Plumbing *****************************/
 
     // Init IPC
-    if ((err = ipc_init()) != ESP_OK) {
-        ESP_LOGE("MAIN", "Couldn't initialize IPC queues: %s", E2S(err));
-        return;
-    }
+    // if ((err = ipc_init()) != ESP_OK) {
+    //     ESP_LOGE("MAIN", "Couldn't initialize IPC queues: %s", E2S(err));
+    //     return;
+    // }
 
 	// Start BLE
-    if ((err = ble_init()) != ESP_OK) {
-        ESP_LOGE("MAIN", "Couldn't initialize BLE handler: %s", E2S(err));
-        return;
-    }
+    // if ((err = ble_init()) != ESP_OK) {
+    //     ESP_LOGE("MAIN", "Couldn't initialize BLE handler: %s", E2S(err));
+    //     return;
+    // }
 
 
     /***************************** Init User Tasks ****************************/
 
 
 	// Launch BLE task
-    if (xTaskCreate(task_ble_manager, "BLE Manager", STACK_SIZE_BLE_MANAGER, 
-        NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
-        ESP_LOGE("MAIN", "Couldn't register BLE task: %s", E2S(err));
-        return;
-    }
+    // if (xTaskCreate(task_ble_manager, "BLE Manager", STACK_SIZE_BLE_MANAGER, 
+    //     NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
+    //     ESP_LOGE("MAIN", "Couldn't register BLE task: %s", E2S(err));
+    //     return;
+    // }
 
     // Launch Telemetry task
-    if (xTaskCreate(task_telemetry_manager, "Telemetry Manager", 
-        STACK_SIZE_TELEMETRY_MANAGER, NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
-        ESP_LOGE("MAIN", "Couldn't register Telemetry task: %s", E2S(err));
-        return;
-    }
+    // if (xTaskCreate(task_telemetry_manager, "Telemetry Manager", 
+    //     STACK_SIZE_TELEMETRY_MANAGER, NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
+    //     ESP_LOGE("MAIN", "Couldn't register Telemetry task: %s", E2S(err));
+    //     return;
+    // }
 
     // Launch LED task
-    if (xTaskCreate(task_led_manager, "LED Manager", STACK_SIZE_LED_MANAGER, 
-        NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
-        ESP_LOGE("MAIN", "Couldn't register LED task: %s", E2S(err));
-        return;
-    }
+    // if (xTaskCreate(task_led_manager, "LED Manager", STACK_SIZE_LED_MANAGER, 
+    //     NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
+    //     ESP_LOGE("MAIN", "Couldn't register LED task: %s", E2S(err));
+    //     return;
+    // }
 
 
     /***************************** Init Timer Task ****************************/
 
 
-    // Initialize the telemetry software timer
-    if ((g_telemetry_timer_handle = xTimerCreate(
-        "Telemetry Timer-Task",     // Task name
-        pdMS_TO_TICKS(DEVICE_TELEMETRY_PERIOD * 1000), // Period (seconds)
-        pdTRUE,                     // The timer is periodic and not one-off
-        0,                          // Timer-Identifier: Only one so just zero
-        timer_callback_telemetry    // Timer callback function
-        )) == NULL) {
-        ESP_LOGE("MAIN", "Couldn't initialize telemetry software timer!");
-    }
+    // // Initialize the telemetry software timer
+    // if ((g_telemetry_timer_handle = xTimerCreate(
+    //     "Telemetry Timer-Task",     // Task name
+    //     pdMS_TO_TICKS(DEVICE_TELEMETRY_PERIOD), // Period (seconds)
+    //     pdTRUE,                     // The timer is periodic and not one-off
+    //     0,                          // Timer-Identifier: Only one so just zero
+    //     timer_callback_telemetry    // Timer callback function
+    //     )) == NULL) {
+    //     ESP_LOGE("MAIN", "Couldn't initialize telemetry software timer!");
+    // }
 
-    // Start the telemetry software timer
-    if (xTimerStart(g_telemetry_timer_handle, 16) != pdPASS) {
-        ESP_LOGE("MAIN", "Couldn't start telemetry software timer!");
-    }
+    // // Start the telemetry software timer
+    // if (xTimerStart(g_telemetry_timer_handle, 16) != pdPASS) {
+    //     ESP_LOGE("MAIN", "Couldn't start telemetry software timer!");
+    // }
+
+    int read_raw;
+    adc2_config_channel_atten(DEVICE_EKG_PIN, ADC_ATTEN_DB_0);
+    const TickType_t xDelay = 4 / portTICK_PERIOD_MS;
+
+    do {
+        esp_err_t r = adc2_get_raw(DEVICE_EKG_PIN, ADC_WIDTH_12Bit, &read_raw);
+        if ( r == ESP_OK ) {
+            printf("%d\n", read_raw );
+        } else if ( r == ESP_ERR_TIMEOUT ) {
+            printf("ADC2 used by Wi-Fi.\n");
+        }
+        vTaskDelay(xDelay);
+    } while (1);
 
     ESP_LOGI("MAIN", "Startup Completed");
 }

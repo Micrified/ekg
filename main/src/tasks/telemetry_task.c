@@ -34,7 +34,12 @@ void task_telemetry_manager (void *args) {
     /* State Bit Field
      * 0x1: Telemetry is enabled
     */
-    uint8_t state = 0x0;
+    uint8_t state = 0x1;
+
+
+    /* Configure ADC for something (reading voltage) */
+    int read_raw;
+    adc2_config_channel_atten(DEVICE_EKG_PIN, ADC_ATTEN_DB_0);
 
     do {
 
@@ -79,7 +84,13 @@ void task_telemetry_manager (void *args) {
             continue;
         }
 
-        // Do something here ...
+        esp_err_t r = adc2_get_raw(DEVICE_EKG_PIN, ADC_WIDTH_12Bit, &read_raw);
+        if ( r == ESP_OK ) {
+            printf("%d\n", read_raw );
+        } else if ( r == ESP_ERR_TIMEOUT ) {
+            printf("ADC2 used by Wi-Fi.\n");
+        }
+
 
     } while (1);
 

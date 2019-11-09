@@ -22,8 +22,10 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+#include "driver/adc.h"
 #include "tasks.h"
 #include "status.h"
+#include "config.h"
 
 
 /*

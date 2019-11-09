@@ -1,6 +1,10 @@
 #if !defined(CONFIG_H)
 #define CONFIG_H
 
+
+#include "driver/adc.h"
+
+
 /*
  *******************************************************************************
  *                          (C) Copyright 2019 <None>                          *
@@ -26,8 +30,8 @@
 #define DEVICE_BLE_SERVICE_NAME			DEVICE_SERVICE_NAME
 
 
-// The interval (in seconds) after which telemetry is sent
-#define DEVICE_TELEMETRY_PERIOD			15
+// The interval (in milliseconds) after which telemetry is sent
+#define DEVICE_TELEMETRY_PERIOD			10
 
 
 /*
@@ -39,6 +43,9 @@
 
 // Pin used for the Bluetooth Low Energy status LED
 #define DEVICE_BLE_LED_PIN              19
+
+// Pin for reading EKG voltage
+#define DEVICE_EKG_PIN					ADC1_CHANNEL_5
 
 
 /*
