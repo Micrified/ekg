@@ -34,6 +34,13 @@
 */
 
 
+#define SET_STATE_VALUE_ATOMIC(byte) {      \
+	portENTER_CRITICAL(&g_state_mutex);     \
+	g_state_flag = byte;                    \
+	portEXIT_CRITICAL(&g_state_mutex);      \
+}
+
+
 #define SET_STATE_BIT_ATOMIC(bit) {         \
     portENTER_CRITICAL(&g_state_mutex);     \
     g_state_flag |= (bit);                  \

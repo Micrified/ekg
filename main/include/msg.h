@@ -52,26 +52,15 @@
 // Byte value used for marking message headers
 #define 	MSG_BYTE_HEAD                       0xFF 
 
-// Bit for indicating WiFi is connected
-#define     MSG_TYPE_WIFI_CONNECTED_BIT         0x01
-
-// Bit for indicating Streaming is enabled
-#define     MSG_TYPE_STREAM_ENABLED_BIT         0x02
-
-// Bit for indicating Telemetry is enabled
-#define     MSG_TYPE_TELEMETRY_ENABLED_BIT      0x04
-
-
 // TODO: Define more status bits here
 
 
 // Macro which quickly creates a status-message with status flag and WiFi addr
-#define 	MSG_STATUS(stat, addr)    {   \
+#define 	MSG_STATUS(stat)    {         \
     .type = MSG_TYPE_STATUS,              \
     .body = (msg_body_t) {                \
         .msg_status = {                   \
-            .status = (stat),             \
-            .wifi_addr = (addr)           \
+            .status = (stat)              \
         }                                 \
     }                                     \
 }
@@ -87,9 +76,8 @@
 // Enumeration describing the type of the message received (treated as 8-bits)
 typedef enum {
 	MSG_TYPE_STATUS = 0,        // Message contains status bit-field only
-	MSG_TYPE_WIFI_DATA,         // Message contains the WiFi SSID and PSWD
-    MSG_TYPE_STREAM_DATA,       // Message contains stream host IP and path
-    MSG_TYPE_TELEMETRY_DATA,    // Message contains telemetry uplink info
+    MSG_TYPE_TRAIN_DATA,        // Message containing all training data
+    MSG_TYPE_SAMPLE_DATA,       // Message containing a data sample
     MSG_TYPE_INSTRUCTION,       // Message contains a device instruction
 
     MSG_TYPE_MAX                // Upper boundary value for the message type 
@@ -98,12 +86,9 @@ typedef enum {
 
 // Enumeration describing the type of instructions available (8-bit value)
 typedef enum {
-    INST_WIFI_ENABLE = 0,       // Instruct device to attempt WiFi connection
-    INST_WIFI_DISABLE,          // Instruct device to disconnect from WiFi
-    INST_STREAM_ENABLE,         // Instruct device to enable streaming mode
-    INST_STREAM_DISABLE,        // Instruct device to stop streaming mode
-    INST_TELEMETRY_ENABLE,      // Instruct device to enable telemetry
-    INST_TELEMETRY_DISABLE,     // Instruct device to disable telemetry
+    INST_EKG_SAMPLE = 0,        // Instruct device to sample EKG data
+    INST_EKG_MONITOR,           // Instruct device to monitor user
+    INST_EKG_IDLE,              // Instruct device to go into idle mode
 
     INST_TYPE_MAX               // Upper boundary value for instruction type
 } msg_instruction_type_t;
@@ -112,30 +97,25 @@ typedef enum {
 // Structure describing a status message (contains single 8-bit status)
 typedef struct {
 	uint8_t status;             // Status bit-field
-    uint32_t wifi_addr;         // LAN address of the device (if connected)
 } msg_status_t;
 
 
-// Structure describing a message containing WiFi connection credentials
+// Structure describing a message containing training data
 typedef struct {
-	uint8_t ssid[32];           // SSIDs are maximally 32-bytes long 
-	uint8_t pswd[64];           // PSWDs are maximally 64-bytes long
-} msg_wifi_data_t;
+    uint16_t n_periods[20];     // Periods of normal waveforms
+    uint16_t n_amplitudes[20];  // Amplitudes of normal waveforms
+    uint16_t a_periods[10];     // Periods of atrial premature beat
+    uint16_t a_amplitudes[10];  // Amplitudes of atrial premature beat
+    uint16_t v_periods[10];     // Periods of premature ventricular contractions
+    uint16_t v_amplitudes[10];  // Amplitudes of premature ventricular contractions
+} msg_train_data_t;
 
 
-// Structure describing a message containing streaming data
+// Structure describing a message containing a data sample
 typedef struct {
-    uint32_t addr;         // 32-bit IPv4 network address (network byte order) 
-    uint16_t port;         // 16-bit port address (network byte order)
-    uint8_t path[64];      // Path for the stream (capped at 64 bytes)
-} msg_stream_data_t;
-
-
-// Structre describing a message containing telemetry data
-typedef struct {
-    uint32_t addr;         // 32-bit IPv4 network address (network byte order)
-    uint16_t port;         // 16-bit port address (network byte order)
-} msg_telemetry_data_t;
+    uint16_t amplitude;         // Contains the amplitude of the sample
+    uint16_t period;            // Contains the period since the last sample
+} msg_sample_data_t;
 
 
 // Structure describing a message containing an instruction
@@ -147,9 +127,8 @@ typedef struct {
 // Union describing a message body in general (used for buffer sizing)
 typedef union {
 	msg_status_t            msg_status;
-	msg_wifi_data_t         msg_wifi_data;
-    msg_stream_data_t       msg_stream_data;
-    msg_telemetry_data_t    msg_telemetry_data;
+    msg_train_data_t        msg_train;
+    msg_sample_data_t       msg_sample;
     msg_instruction_data_t  msg_instruction;
 } msg_body_t;
 

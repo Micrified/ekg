@@ -10,22 +10,18 @@
 
 // Update this table with new message sizes as necessary
 size_t g_msg_size_tab[MSG_TYPE_MAX] = {
-    [MSG_TYPE_STATUS]          = 1 + 4,       // 1B status, 4B addr
-    [MSG_TYPE_WIFI_DATA]       = 64 + 32,     // 32-byte SSID + 64-byte PSWD
-    [MSG_TYPE_STREAM_DATA]     = 64 + 4 + 2,  // 4B addr, 2B port, 64B path
-    [MSG_TYPE_TELEMETRY_DATA]  = 4 + 2,       // 4B addr, 2B port
+    [MSG_TYPE_STATUS]          = 1,           // 1B status
+    [MSG_TYPE_TRAIN_DATA]      = 160,         // 2 * (40 + 20 + 20)
+    [MSG_TYPE_SAMPLE_DATA]     = 2 + 2,       // 2B amplitude & period
     [MSG_TYPE_INSTRUCTION]     = 1,           // 1B instruction
 };
 
 
 // Update this table as new messages are introduced or removed
 const char *g_inst_str_tab[INST_TYPE_MAX] = {
-	[INST_WIFI_ENABLE] = "INST_WIFI_ENABLE",
-	[INST_WIFI_DISABLE] = "INST_WIFI_DISABLE",
-	[INST_STREAM_ENABLE] = "INST_STREAM_ENABLE",
-	[INST_STREAM_DISABLE] = "INST_STREAM_DISABLE",
-	[INST_TELEMETRY_ENABLE] = "INST_TELEMETRY_ENABLE",
-	[INST_TELEMETRY_DISABLE] = "INST_TELEMETRY_DISABLE",
+	[INST_EKG_SAMPLE] = "INST_EKG_SAMPLE",
+	[INST_EKG_MONITOR] = "INST_EKG_MONITOR",
+	[INST_EKG_IDLE] = "INST_EKG_IDLE",
 };
 
 
@@ -43,67 +39,56 @@ size_t pack_msg_status (msg_t *msg, uint8_t *buffer) {
 	// Pack status
 	buffer[z++] = msg->body.msg_status.status;
 
-	// Pack WiFi address (packed lsb first or little endian)
-	buffer[z++] = (msg->body.msg_status.wifi_addr >> 0)  & 0xFF;
-	buffer[z++] = (msg->body.msg_status.wifi_addr >> 8)  & 0xFF;
-	buffer[z++] = (msg->body.msg_status.wifi_addr >> 16) & 0xFF;
-	buffer[z++] = (msg->body.msg_status.wifi_addr >> 24) & 0xFF;
+	return z;
+}
+
+
+// Packs the Training data
+size_t pack_msg_train_data (msg_t *msg, uint8_t *buffer) {
+	size_t z = 0;
+
+	// Pack n_periods[20]
+	memcpy(buffer + z, msg->body.msg_train.n_periods, 20 * sizeof(uint16_t));
+	z += (2 * 20);
+
+	// Pack n_amplitudes[20]
+	memcpy(buffer + z, msg->body.msg_train.n_amplitudes, 20 * sizeof(uint16_t));
+	z += (2 * 20);
+
+
+	// Pack a_periods[10]
+	memcpy(buffer + z, msg->body.msg_train.a_periods, 10 * sizeof(uint16_t));
+	z += (2 * 10);
+
+	// Pack a_amplitudes[10]
+	memcpy(buffer + z, msg->body.msg_train.a_amplitudes, 10 * sizeof(uint16_t));
+	z += (2 * 10);
+
+
+	// Pack v_periods[10]
+	memcpy(buffer + z, msg->body.msg_train.v_periods, 10 * sizeof(uint16_t));
+	z += (2 * 10);
+
+	// Pack v_amplitudes[10]
+	memcpy(buffer + z, msg->body.msg_train.v_amplitudes, 10 * sizeof(uint16_t));
+	z += (2 * 10);
+
 
 	return z;
 }
 
 
-// Packs the WiFi data message
-size_t pack_msg_wifi_data (msg_t *msg, uint8_t *buffer) {
+// Packs the Sample data
+size_t pack_msg_sample_data (msg_t *msg, uint8_t *buffer) {
 	size_t z = 0;
 
-	// Pack in the SSID and update the size
-	memcpy(buffer, msg->body.msg_wifi_data.ssid, 32 * sizeof(uint8_t));
-	z += 32;
+	// Pack the amplitude
+	buffer[z++] = (msg->body.msg_sample.amplitude >> 0) & 0xFF;
+	buffer[z++] = (msg->body.msg_sample.amplitude >> 8) & 0xFF;
 
-	// Pack in the PSWD and update the size
-	memcpy(buffer + z, msg->body.msg_wifi_data.pswd, 64 * sizeof(uint8_t));
-	z += 64;
-
-	return z;
-}
-
-
-// Packs a Stream data message
-size_t pack_msg_stream_data (msg_t *msg, uint8_t *buffer) {
-	size_t z = 0;
-
-	// Pack the streaming address (packed lsb first or little endian)
-	buffer[z++] = (msg->body.msg_stream_data.addr >> 0)  & 0xFF;
-	buffer[z++] = (msg->body.msg_stream_data.addr >> 8)  & 0xFF;
-	buffer[z++] = (msg->body.msg_stream_data.addr >> 16) & 0xFF;
-	buffer[z++] = (msg->body.msg_stream_data.addr >> 24) & 0xFF;
-
-	// Pack the streaming port (packed lsb first or little endian)
-	buffer[z++] = (msg->body.msg_stream_data.port >> 0)  & 0xFF;
-	buffer[z++] = (msg->body.msg_stream_data.port >> 8)  & 0xFF;
-
-	// Copy the path in
-	memcpy(buffer + z, msg->body.msg_stream_data.path, 64 * sizeof(uint8_t));
-	z += 64;
-
-	return z;
-}
-
-
-// Packs a Telemetry data message
-size_t pack_msg_telemetry_data (msg_t *msg, uint8_t *buffer) {
-	size_t z = 0;
-
-	// Pack the telemetry address (packed lsb first or little endian)
-	buffer[z++] = (msg->body.msg_telemetry_data.addr >> 0)  & 0xFF;
-	buffer[z++] = (msg->body.msg_telemetry_data.addr >> 8)  & 0xFF;
-	buffer[z++] = (msg->body.msg_telemetry_data.addr >> 16) & 0xFF;
-	buffer[z++] = (msg->body.msg_telemetry_data.addr >> 24) & 0xFF;
-
-	// Pack the telemetry port (packed lsb first or little endian)
-	buffer[z++] = (msg->body.msg_telemetry_data.port >> 0)  & 0xFF;
-	buffer[z++] = (msg->body.msg_telemetry_data.port >> 8)  & 0xFF;
+	// Pack the period
+	buffer[z++] = (msg->body.msg_sample.period >> 0) & 0xFF;
+	buffer[z++] = (msg->body.msg_sample.period >> 8) & 0xFF;
 
 	return z;
 }
@@ -129,79 +114,63 @@ size_t pack_msg_instruction (msg_t *msg, uint8_t *buffer) {
 
 // Unpacks the status message
 void unpack_msg_status (msg_t *msg, uint8_t *buffer) {
-	uint32_t wifi_addr = 0;
 	size_t offset = 0;
 
 	// Unpack the status
 	msg->body.msg_status.status = buffer[offset++];
-
-	// Unpack the WiFi address (if lsb packed first, unpack starting with msb)
-	// Since App sends as big endian, can unpack 'wrong' way and it works
-	wifi_addr = buffer[offset++]; wifi_addr <<= 8;
-	wifi_addr |= buffer[offset++]; wifi_addr <<= 8;
-	wifi_addr |= buffer[offset++]; wifi_addr <<= 8;
-	wifi_addr |= buffer[offset++];
-
-	msg->body.msg_status.wifi_addr = wifi_addr;
 }
 
 
-// Unpacks the WiFi-data message
-void unpack_msg_wifi_data (msg_t *msg, uint8_t *buffer) {
+// Unpacks the training data
+void unpack_msg_train_data (msg_t *msg, uint8_t *buffer) {
 	size_t offset = 0;
 
-	// Unpack the SSID
-	memcpy(msg->body.msg_wifi_data.ssid, buffer, 32 * sizeof(uint8_t));
-	offset += 32;
+	// Unpack n_periods[20]
+	memcpy(msg->body.msg_train.n_periods, buffer + offset, 
+		20 * sizeof(uint16_t));
+	offset += (2 * 20);
 
-	// Unpack the PSWD
-	memcpy(msg->body.msg_wifi_data.pswd, buffer + offset, 64 * sizeof(uint8_t));
+	// Unpack n_amplitudes[20]
+	memcpy(msg->body.msg_train.n_amplitudes, buffer + offset, 
+		20 * sizeof(uint16_t));
+	offset += (2 * 20);
+
+	// Unpack a_periods[10]
+	memcpy(msg->body.msg_train.a_periods, buffer + offset,
+		10 * sizeof(uint16_t));
+	offset += (2 * 10);
+
+	// Unpack a_amplitudes[10]
+	memcpy(msg->body.msg_train.a_amplitudes, buffer + offset,
+		10 * sizeof(uint16_t));
+	offset += (2 * 10);
+
+	// Unpack v_periods[10]
+	memcpy(msg->body.msg_train.v_periods, buffer + offset,
+		10 * sizeof(uint16_t));
+	offset += (2 * 10);
+
+	// Unpack v_amplitudes[10]
+	memcpy(msg->body.msg_train.v_amplitudes, buffer + offset,
+		10 * sizeof(uint16_t));
+	offset += (2 * 10);
 }
 
 
-// Unpacks a Stream data message
-void unpack_msg_stream_data (msg_t *msg, uint8_t *buffer) {
+// Unpacks the sample data
+void unpack_msg_sample_data (msg_t *msg, uint8_t *buffer) {
 	size_t offset = 0;
-	uint32_t addr;
-	uint16_t port;
+	uint16_t amplitude, period;
 
-	// Unpack the streaming address (if lsb packed first, unpack starting with msb)
-	// Since App sends as big endian, can unpack 'wrong' way and it works
-	addr = buffer[offset++]; addr <<= 8;
-	addr |= buffer[offset++]; addr <<= 8;
-	addr |= buffer[offset++]; addr <<= 8;
-	addr |= buffer[offset++];
-	msg->body.msg_stream_data.addr = addr;
+	// Unpack the amplitude
+	amplitude = buffer[offset++]; amplitude <<= 8;
+	amplitude |= buffer[offset++]; amplitude <<= 8;
+	msg->body.msg_sample.amplitude = amplitude;
 
-	// Unpack the streaming port (if lsb packed first, unpack starting with msb)
-	port = buffer[offset++]; port <<= 8;
-	port |= buffer[offset++];
-	msg->body.msg_stream_data.port = port;
-
-	// Unpack the path
-	memcpy(msg->body.msg_stream_data.path, buffer + offset, 
-		64 * sizeof(uint8_t));
-}
-
-
-// Unpacks a Telemetry data message
-void unpack_msg_telemetry_data (msg_t *msg, uint8_t *buffer) {
-	size_t offset = 0;
-	uint32_t addr;
-	uint16_t port;
-
-	// Unpack the telemetry address (if lsb packed first, unpack starting with msb)
-	// Since App sends as big endian, can unpack 'wrong' way and it works
-	addr = buffer[offset++]; addr <<= 8;
-	addr |= buffer[offset++]; addr <<= 8;
-	addr |= buffer[offset++]; addr <<= 8;
-	addr |= buffer[offset++];
-	msg->body.msg_telemetry_data.addr = addr;
-
-	// Unpack the telemetry port (if lsb packed first, unpack starting with msb)
-	port = buffer[offset++]; port <<= 8;
-	port |= buffer[offset++];
-	msg->body.msg_telemetry_data.port = port;
+	// Unpack the period
+	period = buffer[offset++]; period <<= 8;
+	period |= buffer[offset++]; period <<= 8;
+	msg->body.msg_sample.period = period;
 }
 
 
@@ -245,18 +214,13 @@ size_t msg_pack (msg_t *msg, uint8_t *buffer) {
 		}
 		break;
 
-		case MSG_TYPE_WIFI_DATA: {
-			z += pack_msg_wifi_data(msg, buffer + z);
+		case MSG_TYPE_TRAIN_DATA: {
+			z += pack_msg_train_data(msg, buffer + z);
 		}
 		break;
 
-		case MSG_TYPE_STREAM_DATA: {
-			z += pack_msg_stream_data(msg, buffer + z);
-		}
-		break;
-
-		case MSG_TYPE_TELEMETRY_DATA: {
-			z += pack_msg_telemetry_data(msg, buffer + z);
+		case MSG_TYPE_SAMPLE_DATA: {
+			z += pack_msg_sample_data(msg, buffer + z);
 		}
 		break;
 
@@ -309,18 +273,13 @@ esp_err_t msg_unpack (msg_t *msg, uint8_t *buffer, size_t len) {
 		}
 		break;
 
-		case MSG_TYPE_WIFI_DATA: {
-			unpack_msg_wifi_data(&msg_cpy, buffer + offset);
+		case MSG_TYPE_TRAIN_DATA: {
+			unpack_msg_train_data(&msg_cpy, buffer + offset);
 		}
 		break;
 
-		case MSG_TYPE_STREAM_DATA: {
-			unpack_msg_stream_data(&msg_cpy, buffer + offset);
-		}
-		break;
-
-		case MSG_TYPE_TELEMETRY_DATA: {
-			unpack_msg_telemetry_data(&msg_cpy, buffer + offset);
+		case MSG_TYPE_SAMPLE_DATA: {
+			unpack_msg_sample_data(&msg_cpy, buffer + offset);
 		}
 		break;
 
