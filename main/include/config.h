@@ -1,6 +1,10 @@
 #if !defined(CONFIG_H)
 #define CONFIG_H
 
+
+#include "driver/adc.h"
+
+
 /*
  *******************************************************************************
  *                          (C) Copyright 2019 <None>                          *
@@ -26,8 +30,8 @@
 #define DEVICE_BLE_SERVICE_NAME			DEVICE_SERVICE_NAME
 
 
-// The interval (in seconds) after which telemetry is sent
-#define DEVICE_TELEMETRY_PERIOD			15
+// The interval (in milliseconds) after which telemetry is sent
+#define DEVICE_TELEMETRY_PERIOD			10
 
 
 /*
@@ -39,6 +43,31 @@
 
 // Pin used for the Bluetooth Low Energy status LED
 #define DEVICE_BLE_LED_PIN              19
+
+// Pin for reading EKG voltage
+#define DEVICE_EKG_PIN					ADC1_CHANNEL_5
+
+
+/*
+ *******************************************************************************
+ *                                   Sensors                                   *
+ *******************************************************************************
+*/
+
+
+// How many milliseconds the device should wait before checking the sensor
+#define DEVICE_SENSOR_POLL_PERIOD_MS    10
+
+
+/* The amount of sensor readings the device should attempt before pushing the
+ * results (if any) to a global buffer. Increasing this means the task is
+ * stalled less to update the buffer, but also means data will become available
+ * less often. 
+ */
+#define DEVICE_SENSOR_PUSH_BUF_SIZE     128
+
+// The threshold, at or over which, readings are considered to be R peaks
+#define DEVICE_R_PEAK_THRESHOLD         1200
 
 
 /*
@@ -52,12 +81,12 @@
 #define STACK_SIZE_BLE_MANAGER          2048
 
 
-// Stack size (words) for the telemetry task
-#define STACK_SIZE_TELEMETRY_MANAGER    2048
+// Stack size (words) for the EKG task
+#define STACK_SIZE_EKG_MANAGER          2048
 
 
-// Stack size (words) for the LED task
-#define STACK_SIZE_LED_MANAGER          1024
+// Stack size (words) for the sample task
+#define STACK_SIZE_SAMPLE_MANAGER       1024
 
 
 #endif

@@ -35,8 +35,8 @@
 #include "msg.h"
 #include "status.h"
 #include "ble_task.h"
-#include "telemetry_task.h"
-#include "led_task.h"
+#include "ekg_task.h"
+#include "sample_task.h"
 #include "config.h"
 
 
@@ -47,19 +47,12 @@
 */
 
 
-// /* Enable the user of Software timers with FreeRTOS */
-#define configUSE_TIMERS                1
-
 
 /*
  *******************************************************************************
  *                              Global Variables                               *
  *******************************************************************************
 */
-
-
-// Handle for the telemetry software timer
-xTimerHandle g_telemetry_timer_handle;
 
 
 // Global state flag (see msg.h for bits)
@@ -72,6 +65,26 @@ uint32_t g_state_data;
 
 // Global mutex for controlled access to the state flag
 portMUX_TYPE g_state_mutex = portMUX_INITIALIZER_UNLOCKED;
+
+// Global mutex for controlled access to the sensor buffer
+portMUX_TYPE g_sensor_mutex = portMUX_INITIALIZER_UNLOCKED;
+
+
+// Global variable holding the sensor sample buffer
+uint16_t g_sample_buffer[DEVICE_SENSOR_PUSH_BUF_SIZE];
+
+
+// Global variables holding the normal wave training data set
+uint16_t g_n_periods[20];
+uint16_t g_n_amplitudes[20];
+
+// Global variables holding the atrial wave training data set
+uint16_t g_a_periods[10];
+uint16_t g_a_amplitudes[10];
+
+// Global variables holding the ventrical wave training data set
+uint16_t g_v_periods[10];
+uint16_t g_v_amplitudes[10];
 
 
 /*
@@ -98,22 +111,6 @@ esp_err_t init_flash (void) {
 	}
 
 	return err;
-}
-
-
-/*
- *******************************************************************************
- *                          Timer Callback Functions                           *
- *******************************************************************************
-*/
-
-
-// Callback for the telemetry software timer
-void timer_callback_telemetry (TimerHandle_t xTimer) {
-
-    // Toggle any task listening on the dispatch-telemetry flag
-    xEventGroupSetBits(g_event_group, FLAG_TELEMETRY_SEND);
-
 }
 
 
@@ -172,39 +169,54 @@ void app_main (void) {
         return;
     }
 
-    // Launch Telemetry task
-    if (xTaskCreate(task_telemetry_manager, "Telemetry Manager", 
-        STACK_SIZE_TELEMETRY_MANAGER, NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
+
+    // Launch EKG task
+    if (xTaskCreate(task_ekg_manager, "EKG Manager", 
+        STACK_SIZE_EKG_MANAGER, NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
         ESP_LOGE("MAIN", "Couldn't register Telemetry task: %s", E2S(err));
         return;
     }
 
-    // Launch LED task
-    if (xTaskCreate(task_led_manager, "LED Manager", STACK_SIZE_LED_MANAGER, 
-        NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
-        ESP_LOGE("MAIN", "Couldn't register LED task: %s", E2S(err));
-        return;
+
+    // Launch Sample task
+    if (xTaskCreate(task_sample_manager, "Sample Manager",
+        STACK_SIZE_SAMPLE_MANAGER, NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
+        ESP_LOGE("MAIN", "Couldn't register Sample task: %s", E2S(err));
     }
 
 
     /***************************** Init Timer Task ****************************/
 
 
-    // Initialize the telemetry software timer
-    if ((g_telemetry_timer_handle = xTimerCreate(
-        "Telemetry Timer-Task",     // Task name
-        pdMS_TO_TICKS(DEVICE_TELEMETRY_PERIOD * 1000), // Period (seconds)
-        pdTRUE,                     // The timer is periodic and not one-off
-        0,                          // Timer-Identifier: Only one so just zero
-        timer_callback_telemetry    // Timer callback function
-        )) == NULL) {
-        ESP_LOGE("MAIN", "Couldn't initialize telemetry software timer!");
-    }
+    // // Initialize the telemetry software timer
+    // if ((g_telemetry_timer_handle = xTimerCreate(
+    //     "Telemetry Timer-Task",     // Task name
+    //     pdMS_TO_TICKS(DEVICE_TELEMETRY_PERIOD), // Period (seconds)
+    //     pdTRUE,                     // The timer is periodic and not one-off
+    //     0,                          // Timer-Identifier: Only one so just zero
+    //     timer_callback_telemetry    // Timer callback function
+    //     )) == NULL) {
+    //     ESP_LOGE("MAIN", "Couldn't initialize telemetry software timer!");
+    // }
 
-    // Start the telemetry software timer
-    if (xTimerStart(g_telemetry_timer_handle, 16) != pdPASS) {
-        ESP_LOGE("MAIN", "Couldn't start telemetry software timer!");
-    }
+    // // Start the telemetry software timer
+    // if (xTimerStart(g_telemetry_timer_handle, 16) != pdPASS) {
+    //     ESP_LOGE("MAIN", "Couldn't start telemetry software timer!");
+    // }
+
+    // int read_raw;
+    // adc2_config_channel_atten(DEVICE_EKG_PIN, ADC_ATTEN_DB_0);
+    // const TickType_t xDelay = 2 / portTICK_PERIOD_MS;
+
+    // do {
+    //     esp_err_t r = adc2_get_raw(DEVICE_EKG_PIN, ADC_WIDTH_12Bit, &read_raw);
+    //     if ( r == ESP_OK ) {
+    //         printf("%d\n", read_raw );
+    //     } else if ( r == ESP_ERR_TIMEOUT ) {
+    //         printf("ADC2 used by Wi-Fi.\n");
+    //     }
+    //     vTaskDelay(xDelay);
+    // } while (1);
 
     ESP_LOGI("MAIN", "Startup Completed");
 }
