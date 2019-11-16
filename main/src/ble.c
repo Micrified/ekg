@@ -210,8 +210,8 @@ esp_err_t ble_init (void) {
     }
 
     // Enable controller in BLE mode (dual is ESP_BT_MODE_BTDM)
-    if ((err = esp_bt_controller_enable(ESP_BT_MODE_BLE)) != ESP_OK) {
-        ESP_LOGE("BLE-Driver", "Enable BLE dual mode failed: %s", E2S(err));
+    if ((err = esp_bt_controller_enable(ESP_BT_MODE_BTDM)) != ESP_OK) {
+        ESP_LOGE("BLE-Driver", "Enable BLE mode failed: %s", E2S(err));
         goto end;
     }
 
@@ -258,7 +258,6 @@ esp_err_t ble_init (void) {
     if ((err = esp_ble_gatt_set_local_mtu(BLE_MTU_SIZE)) != ESP_OK) {
     	ESP_LOGE("BLE-Driver", "Couldn't set local MTU size: %s", E2S(err));
     }
-
 
     ESP_LOGI("BLE-Driver", "Ready");
 

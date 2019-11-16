@@ -12,13 +12,18 @@
 void instruction_handler (uint8_t instruction) {
     switch (instruction) {
 
-        case INST_TELEMETRY_ENABLE: {
-            xEventGroupSetBits(g_event_group, FLAG_TELEMETRY_START);
+        case INST_EKG_SAMPLE: {
+            xEventGroupSetBits(g_event_group, FLAG_EKG_SAMPLE);
         }
         break;
 
-        case INST_TELEMETRY_DISABLE: {
-            xEventGroupSetBits(g_event_group, FLAG_TELEMETRY_STOP);
+        case INST_EKG_MONITOR: {
+            xEventGroupSetBits(g_event_group, FLAG_EKG_MONITOR);
+        }
+        break;
+
+        case INST_EKG_IDLE: {
+            xEventGroupSetBits(g_event_group, FLAG_EKG_IDLE);
         }
         break;
 
@@ -56,11 +61,53 @@ void msg_handler (uint8_t *buffer, size_t size) {
         }
         break;
 
+
+        // Message with training data
+        case MSG_TYPE_TRAIN_DATA: {
+
+            // Install normal training data
+            memcpy(g_n_periods, msg.body.msg_train.n_periods, 
+                20 * sizeof(uint16_t));
+            memcpy(g_n_amplitudes, msg.body.msg_train.n_amplitudes, 
+                20 * sizeof(uint16_t));
+
+            // Install atrial training data
+            memcpy(g_a_periods, msg.body.msg_train.a_periods, 
+                10 * sizeof(uint16_t));
+            memcpy(g_a_amplitudes, msg.body.msg_train.a_amplitudes, 
+                10 * sizeof(uint16_t));
+
+            // Install ventricular training data
+            memcpy(g_v_periods, msg.body.msg_train.v_periods, 
+                10 * sizeof(uint16_t));
+            memcpy(g_v_amplitudes, msg.body.msg_train.v_amplitudes, 
+                10 * sizeof(uint16_t));
+        }
+        break;
+
+        // Message with sample data
+        case MSG_TYPE_SAMPLE_DATA: {
+            ESP_LOGW("BLE", "This device has no use for sample data messages!");
+        }
+        break;
+
         default: {
             ESP_LOGW("BLE", "Received unknown message type (%d)",msg.type);
         }
     }
 }
+
+// Global variables holding the normal wave training data set
+extern uint16_t g_n_periods[20];
+extern uint16_t g_n_amplitudes[20];
+
+// Global variables holding the atrial wave training data set
+extern uint16_t g_a_periods[10];
+extern uint16_t g_a_amplitudes[10];
+
+// Global variables holding the ventrical wave training data set
+extern uint16_t g_v_periods[10];
+extern uint16_t g_v_amplitudes[10];
 
 
 /*

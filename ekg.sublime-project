@@ -3,6 +3,9 @@
 	[
 		{
 			"path": "."
+		},
+		{
+			"path": "/Users/Owatch/Documents/Somnox/esp-idf"
 		}
 	]
 }
