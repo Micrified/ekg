@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include "esp_system.h"
 #include "esp_log.h"
+#include "classifier.h"
 
 /* A message has the following structure
  * 
@@ -104,6 +105,10 @@ typedef enum {
     INST_STREAM_DISABLE,        // Instruct device to stop streaming mode
     INST_TELEMETRY_ENABLE,      // Instruct device to enable telemetry
     INST_TELEMETRY_DISABLE,     // Instruct device to disable telemetry
+    INST_TRAINING_START,        // Instruct device to start training
+    INST_TRAINING_STOP,         // Instruct device to stop training
+    INST_NORMAL_MODE_START,     // Instruct device to start running normally
+    INST_NORMAL_MODE_STOP       // Instruct device to stop running normally
 
     INST_TYPE_MAX               // Upper boundary value for instruction type
 } msg_instruction_type_t;
@@ -142,6 +147,12 @@ typedef struct {
 typedef struct {
     uint8_t inst;          // Holds value of msg_instruction_type_t
 } msg_instruction_data_t;
+
+
+// Structure describing a message containing a sample
+typedef struct {
+    sample_t sample;
+} msg_sample_t;
 
 
 // Union describing a message body in general (used for buffer sizing)
