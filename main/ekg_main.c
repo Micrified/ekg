@@ -67,8 +67,7 @@ uint32_t g_state_data;
 portMUX_TYPE g_state_mutex = portMUX_INITIALIZER_UNLOCKED;
 
 // Global mutex for controlled access to the sensor buffer
-portMUX_TYPE g_sensor_mutex = portMUX_INITIALIZER_UNLOCKED;
-
+portMUX_TYPE g_sample_buffer_mutex = portMUX_INITIALIZER_UNLOCKED;
 
 // Global variable holding the sensor sample buffer
 uint16_t g_sample_buffer[DEVICE_SENSOR_PUSH_BUF_SIZE];
@@ -161,62 +160,33 @@ void app_main (void) {
 
     /***************************** Init User Tasks ****************************/
 
+    /* Experimental
+     * We pin Bluetooth and EKG tasks to Core 0
+     * We pin Sample task to Core 1
+    */
 
-	// Launch BLE task
-    if (xTaskCreate(task_ble_manager, "BLE Manager", STACK_SIZE_BLE_MANAGER, 
-        NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
-        ESP_LOGE("MAIN", "Couldn't register BLE task: %s", E2S(err));
+	// Launch BLE task (default priority - core 0)
+    if (xTaskCreatePinnedToCore(task_ble_manager, "BLE Manager", 
+        STACK_SIZE_BLE_MANAGER, NULL, tskIDLE_PRIORITY, NULL, 0x0) != pdPASS) {
+        ESP_LOGE("MAIN", "Couldn't register BLE task");
         return;
     }
-
 
     // Launch EKG task
-    if (xTaskCreate(task_ekg_manager, "EKG Manager", 
-        STACK_SIZE_EKG_MANAGER, NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
-        ESP_LOGE("MAIN", "Couldn't register Telemetry task: %s", E2S(err));
+    if (xTaskCreatePinnedToCore(task_ekg_manager, "EKG Manager", 
+        STACK_SIZE_EKG_MANAGER, NULL, tskIDLE_PRIORITY, NULL, 0x0) != pdPASS) {
+        ESP_LOGE("MAIN", "Couldn't register Telemetry task");
         return;
     }
 
-
-    // Launch Sample task
-    if (xTaskCreate(task_sample_manager, "Sample Manager",
-        STACK_SIZE_SAMPLE_MANAGER, NULL, tskIDLE_PRIORITY, NULL) != pdPASS) {
-        ESP_LOGE("MAIN", "Couldn't register Sample task: %s", E2S(err));
+    // Launch Sample task (highest priority - core 1)
+    if (xTaskCreatePinnedToCore(task_sample_manager, "Sample Manager",
+        STACK_SIZE_SAMPLE_MANAGER, NULL, 0, NULL, 0x1) != pdPASS) {
+        ESP_LOGE("MAIN", "Couldn't register Sample task");
     }
 
 
     /***************************** Init Timer Task ****************************/
-
-
-    // // Initialize the telemetry software timer
-    // if ((g_telemetry_timer_handle = xTimerCreate(
-    //     "Telemetry Timer-Task",     // Task name
-    //     pdMS_TO_TICKS(DEVICE_TELEMETRY_PERIOD), // Period (seconds)
-    //     pdTRUE,                     // The timer is periodic and not one-off
-    //     0,                          // Timer-Identifier: Only one so just zero
-    //     timer_callback_telemetry    // Timer callback function
-    //     )) == NULL) {
-    //     ESP_LOGE("MAIN", "Couldn't initialize telemetry software timer!");
-    // }
-
-    // // Start the telemetry software timer
-    // if (xTimerStart(g_telemetry_timer_handle, 16) != pdPASS) {
-    //     ESP_LOGE("MAIN", "Couldn't start telemetry software timer!");
-    // }
-
-    // int read_raw;
-    // adc2_config_channel_atten(DEVICE_EKG_PIN, ADC_ATTEN_DB_0);
-    // const TickType_t xDelay = 2 / portTICK_PERIOD_MS;
-
-    // do {
-    //     esp_err_t r = adc2_get_raw(DEVICE_EKG_PIN, ADC_WIDTH_12Bit, &read_raw);
-    //     if ( r == ESP_OK ) {
-    //         printf("%d\n", read_raw );
-    //     } else if ( r == ESP_ERR_TIMEOUT ) {
-    //         printf("ADC2 used by Wi-Fi.\n");
-    //     }
-    //     vTaskDelay(xDelay);
-    // } while (1);
 
     ESP_LOGI("MAIN", "Startup Completed");
 }

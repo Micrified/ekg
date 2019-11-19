@@ -12,16 +12,15 @@
 size_t g_msg_size_tab[MSG_TYPE_MAX] = {
     [MSG_TYPE_STATUS]          = 1,           // 1B status
     [MSG_TYPE_TRAIN_DATA]      = 160,         // 2 * (40 + 20 + 20)
-    [MSG_TYPE_SAMPLE_DATA]     = 2 + 2,       // 2B amplitude & period
+    [MSG_TYPE_SAMPLE_DATA]     = 1 + 2 + 2,   // 1B label + 2B (amp/period)
     [MSG_TYPE_INSTRUCTION]     = 1,           // 1B instruction
 };
 
 
 // Update this table as new messages are introduced or removed
 const char *g_inst_str_tab[INST_TYPE_MAX] = {
-	[INST_EKG_SAMPLE] = "INST_EKG_SAMPLE",
-	[INST_EKG_MONITOR] = "INST_EKG_MONITOR",
-	[INST_EKG_IDLE] = "INST_EKG_IDLE",
+	[INST_EKG_STOP] = "INST_EKG_STOP",
+	[INST_EKG_START] = "INST_EKG_START",
 };
 
 
@@ -81,6 +80,9 @@ size_t pack_msg_train_data (msg_t *msg, uint8_t *buffer) {
 // Packs the Sample data
 size_t pack_msg_sample_data (msg_t *msg, uint8_t *buffer) {
 	size_t z = 0;
+
+	// Pack the label
+	buffer[z++] = (msg->body.msg_sample.label);
 
 	// Pack the amplitude
 	buffer[z++] = (msg->body.msg_sample.amplitude >> 0) & 0xFF;
@@ -160,7 +162,12 @@ void unpack_msg_train_data (msg_t *msg, uint8_t *buffer) {
 // Unpacks the sample data
 void unpack_msg_sample_data (msg_t *msg, uint8_t *buffer) {
 	size_t offset = 0;
+	uint8_t label;
 	uint16_t amplitude, period;
+
+	// Unpack the label
+	label = buffer[offset++];
+	msg->body.msg_sample.label = label;
 
 	// Unpack the amplitude
 	amplitude = buffer[offset++]; amplitude <<= 8;

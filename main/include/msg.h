@@ -86,9 +86,8 @@ typedef enum {
 
 // Enumeration describing the type of instructions available (8-bit value)
 typedef enum {
-    INST_EKG_SAMPLE = 0,        // Instruct device to sample EKG data
-    INST_EKG_MONITOR,           // Instruct device to monitor user
-    INST_EKG_IDLE,              // Instruct device to go into idle mode
+    INST_EKG_STOP = 0,        // Instruct device to sample EKG data
+    INST_EKG_START,           // Instruct device to monitor user
 
     INST_TYPE_MAX               // Upper boundary value for instruction type
 } msg_instruction_type_t;
@@ -113,6 +112,7 @@ typedef struct {
 
 // Structure describing a message containing a data sample
 typedef struct {
+    uint8_t  label;             // The label attached to the sample
     uint16_t amplitude;         // Contains the amplitude of the sample
     uint16_t period;            // Contains the period since the last sample
 } msg_sample_data_t;

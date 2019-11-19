@@ -12,18 +12,13 @@
 void instruction_handler (uint8_t instruction) {
     switch (instruction) {
 
-        case INST_EKG_SAMPLE: {
-            xEventGroupSetBits(g_event_group, FLAG_EKG_SAMPLE);
+        case INST_EKG_START: {
+            xEventGroupSetBits(g_event_group, FLAG_EKG_START);
         }
         break;
 
-        case INST_EKG_MONITOR: {
-            xEventGroupSetBits(g_event_group, FLAG_EKG_MONITOR);
-        }
-        break;
-
-        case INST_EKG_IDLE: {
-            xEventGroupSetBits(g_event_group, FLAG_EKG_IDLE);
+        case INST_EKG_STOP: {
+            xEventGroupSetBits(g_event_group, FLAG_EKG_STOP);
         }
         break;
 

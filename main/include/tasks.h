@@ -41,9 +41,9 @@
 
 
 // EKG Flag-Group
-#define FLAG_EKG_SAMPLE             0x0010    // Instruct EKG to relay samples
-#define FLAG_EKG_MONITOR            0x0020    // Instruct EKG to monitor
-#define FLAG_EKG_IDLE               0x0040    // Instruct EKG to do nothing
+#define FLAG_EKG_START              0x0010    // EKG will relay samples
+#define FLAG_EKG_STOP               0x0020    // EKG will do nothing
+#define FLAG_EKG_TICK               0x0040    // EKG will process sample buffer
 
 
 // EKG Flag-Group Mask
