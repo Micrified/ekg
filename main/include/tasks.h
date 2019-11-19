@@ -43,11 +43,12 @@
 // EKG Flag-Group
 #define FLAG_EKG_START              0x0010    // EKG will relay samples
 #define FLAG_EKG_STOP               0x0020    // EKG will do nothing
-#define FLAG_EKG_TICK               0x0040    // EKG will process sample buffer
+#define FLAG_EKG_CONFIGURE          0x0040    // EKG will update configuration
+#define FLAG_EKG_TICK               0x0080    // EKG will process sample buffer
 
 
 // EKG Flag-Group Mask
-#define MASK_EKG_FLAGS              0x0070    // Masks all EKG event bits
+#define MASK_EKG_FLAGS              0x00F0    // Masks all EKG event bits
 
 
 /*

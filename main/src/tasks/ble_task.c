@@ -22,6 +22,11 @@ void instruction_handler (uint8_t instruction) {
         }
         break;
 
+        case INST_EKG_CONFIGURE: {
+            xEventGroupSetBits(g_event_group, FLAG_EKG_CONFIGURE);
+        }
+        break;
+
         default:
             ESP_LOGE("BLE", "Unhandled instruction (%X)", instruction);
     }
@@ -53,6 +58,20 @@ void msg_handler (uint8_t *buffer, size_t size) {
 
             // Take action on the message type
             instruction_handler(inst);
+        }
+        break;
+
+
+        // Message with configuration data
+        case MSG_TYPE_CONFIGURATION: {
+
+            // Set the threshold comparator
+            g_cfg_comp = msg.body.msg_configuration.cfg_comp;
+
+            // Set the threshold value
+            g_cfg_val = msg.body.msg_configuration.cfg_val;
+
+            // We don't automatically notify - an instruction can do that
         }
         break;
 

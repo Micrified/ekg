@@ -79,6 +79,7 @@ typedef enum {
     MSG_TYPE_TRAIN_DATA,        // Message containing all training data
     MSG_TYPE_SAMPLE_DATA,       // Message containing a data sample
     MSG_TYPE_INSTRUCTION,       // Message contains a device instruction
+    MSG_TYPE_CONFIGURATION,     // Message contains configuration data
 
     MSG_TYPE_MAX                // Upper boundary value for the message type 
 } msg_type_t;
@@ -86,8 +87,9 @@ typedef enum {
 
 // Enumeration describing the type of instructions available (8-bit value)
 typedef enum {
-    INST_EKG_STOP = 0,        // Instruct device to sample EKG data
-    INST_EKG_START,           // Instruct device to monitor user
+    INST_EKG_STOP = 0,          // Instruct device to sample EKG data
+    INST_EKG_START,             // Instruct device to monitor user
+    INST_EKG_CONFIGURE,         // Instruct device to update configuration
 
     INST_TYPE_MAX               // Upper boundary value for instruction type
 } msg_instruction_type_t;
@@ -99,7 +101,7 @@ typedef struct {
 } msg_status_t;
 
 
-// Structure describing a message containing training data
+// Structure describing a message containing training data (12-bit normalized)
 typedef struct {
     uint16_t n_periods[20];     // Periods of normal waveforms
     uint16_t n_amplitudes[20];  // Amplitudes of normal waveforms
@@ -120,16 +122,24 @@ typedef struct {
 
 // Structure describing a message containing an instruction
 typedef struct {
-    uint8_t inst;          // Holds value of msg_instruction_type_t
+    uint8_t  inst;              // Holds value of msg_instruction_type_t
 } msg_instruction_data_t;
+
+
+// Structure describing a configuration message
+typedef struct {
+    uint8_t  cfg_comp;           // Holds a comparator flag
+    uint16_t cfg_val;            // Holds a comparator value
+} msg_configuration_data_t;
 
 
 // Union describing a message body in general (used for buffer sizing)
 typedef union {
-	msg_status_t            msg_status;
-    msg_train_data_t        msg_train;
-    msg_sample_data_t       msg_sample;
-    msg_instruction_data_t  msg_instruction;
+	msg_status_t             msg_status;
+    msg_train_data_t         msg_train;
+    msg_sample_data_t        msg_sample;
+    msg_configuration_data_t msg_configuration;
+    msg_instruction_data_t   msg_instruction;
 } msg_body_t;
 
 

@@ -75,6 +75,16 @@ static void send_sample (uint16_t amplitude, uint16_t rr_period, uint8_t lab) {
 }
 
 
+// Configurable peak detector. Returns nonzero on peak, else zero
+static int isPeak (uint16_t value, uint8_t comp, uint16_t threshold) {
+	if (comp) {
+		return (value <= threshold);
+	} else {
+		return (value >= threshold);
+	}
+}
+
+
 /*
  *******************************************************************************
  *                            Function Definitions                             *
@@ -82,16 +92,34 @@ static void send_sample (uint16_t amplitude, uint16_t rr_period, uint8_t lab) {
 */
 
 
+#define LED_PIN              19
+
+
 void task_ekg_manager (void *args) {
 	uint32_t  flags    = 0x0;
-	uint8_t   relay    = 0x0;     // Initially not relaying 
+	uint8_t   relay    = 0x0;     // Initially not relaying
+	uint8_t   cfg_comp = 0x0;
+	uint16_t  cfg_val  = 2450;    
 	int p1, p2;
 
+	// Configure output pin for LED
+	gpio_pad_select_gpio(LED_PIN);
+    gpio_set_direction(LED_PIN, GPIO_MODE_OUTPUT);
+
 	do {
+
+		// Unset LED
+		gpio_set_level(LED_PIN, 0);
 
 		// Wait indefinitely for a flag to be set (clear all automatically)
 		flags = xEventGroupWaitBits(g_event_group, MASK_EKG_FLAGS, pdTRUE,
 			pdFALSE, portMAX_DELAY);
+
+		// If the configuration flag is set: Update local configuration
+		if (flags & FLAG_EKG_CONFIGURE) {
+			cfg_comp = g_cfg_comp;
+			cfg_val  = g_cfg_val;
+		}
 
 		// If the start flag is set: Enable relaying
 		if (flags & FLAG_EKG_START) {
@@ -106,15 +134,23 @@ void task_ekg_manager (void *args) {
 		// If a tick occurred: Copy and process the buffer
 		if (flags & FLAG_EKG_TICK) {
 
+			// Flash LED to show pulse
+ 			gpio_set_level(LED_PIN, 1);
+
 			// Lock the mutex and copy over the data
 			portENTER_CRITICAL(&g_sample_buffer_mutex);
 			memcpy(g_local_sample_buffer, g_sample_buffer, 
 				DEVICE_SENSOR_PUSH_BUF_SIZE * sizeof(uint16_t));
 			portEXIT_CRITICAL(&g_sample_buffer_mutex);
 
+			// Just output the samples for now
+			// for (p1 = 0; p1 < DEVICE_SENSOR_PUSH_BUF_SIZE; ++p1) {
+			// 	printf("%u\n", g_local_sample_buffer[p1]);
+			// }
+
 			// Look for a first peak
 			for (p1 = 0; p1 < DEVICE_SENSOR_PUSH_BUF_SIZE; ++p1) {
-				if (g_local_sample_buffer[p1] > DEVICE_R_PEAK_THRESHOLD) {
+				if (isPeak(g_local_sample_buffer[p1], cfg_comp, cfg_val)) {
 					break;
 				}
 			}
@@ -124,7 +160,7 @@ void task_ekg_manager (void *args) {
 
 			// Search for a second peak
 			for (p2 = p1 + 1; p2 < DEVICE_SENSOR_PUSH_BUF_SIZE; ++p2) {
-				if (g_local_sample_buffer[p2] > DEVICE_R_PEAK_THRESHOLD) {
+				if (isPeak(g_local_sample_buffer[p2], cfg_comp, cfg_val)) {
 					break;
 				}
 			}
@@ -137,12 +173,12 @@ void task_ekg_manager (void *args) {
 			uint16_t amplitude    = g_local_sample_buffer[p2];
 			uint8_t  label        = classify_knn(amplitude, rr_period);
 
+			printf("%u %u %u\n", rr_period, amplitude, label);
+
 			// Send sample (but only if in relay mode)
 			if (relay) {
 				send_sample(amplitude, rr_period, label);
 			}
-
-			// Flash LED to show pulse
 		}
 
 	} while (1);

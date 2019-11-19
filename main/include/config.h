@@ -68,7 +68,11 @@
 
 
 // The threshold, at or over which, readings are considered to be R peaks
-#define DEVICE_R_PEAK_THRESHOLD         1200
+#define DEVICE_R_PEAK_THRESHOLD         2450
+
+
+// The threshold, at or which under, readings are considered to be R dips
+#define DEVICE_R_DIP_THRESHOLD          930
 
 
 /*

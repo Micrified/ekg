@@ -26,7 +26,7 @@ void task_sample_manager (void *args) {
 	const TickType_t period = 10 / portTICK_PERIOD_MS;
 
 	// Configure ADC (ADC2, pin 14)
-	adc2_config_channel_atten(DEVICE_EKG_PIN, ADC_ATTEN_0db);
+	adc2_config_channel_atten(DEVICE_EKG_PIN, ADC_ATTEN_11db);
 
 	// Task loop
 	do {

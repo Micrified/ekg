@@ -69,9 +69,12 @@ portMUX_TYPE g_state_mutex = portMUX_INITIALIZER_UNLOCKED;
 // Global mutex for controlled access to the sensor buffer
 portMUX_TYPE g_sample_buffer_mutex = portMUX_INITIALIZER_UNLOCKED;
 
+// Global variables (comparator type, comparator value)
+uint8_t g_cfg_comp = 0x1;
+uint16_t g_cfg_val = 930;
+
 // Global variable holding the sensor sample buffer
 uint16_t g_sample_buffer[DEVICE_SENSOR_PUSH_BUF_SIZE];
-
 
 // Global variables holding the normal wave training data set
 uint16_t g_n_periods[20];

@@ -46,6 +46,10 @@ extern uint16_t g_sample_buffer[DEVICE_SENSOR_PUSH_BUF_SIZE];
 extern portMUX_TYPE g_sample_buffer_mutex;
 
 
+// Global variables (comparator type, comparator value)
+extern uint8_t g_cfg_comp;
+extern uint16_t g_cfg_val;
+
 // Global variables holding the normal wave training data set
 extern uint16_t g_n_periods[20];
 extern uint16_t g_n_amplitudes[20];
