@@ -114,7 +114,7 @@ typedef struct {
 
 // Structure describing a message containing a data sample
 typedef struct {
-    uint8_t  label;             // The label attached to the sample
+    uint8_t  label;             // Sample label (0x0 = N, 0x1 = A, 0x2 = V)
     uint16_t amplitude;         // Contains the amplitude of the sample
     uint16_t period;            // Contains the period since the last sample
 } msg_sample_data_t;

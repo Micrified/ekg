@@ -148,15 +148,16 @@ void app_main (void) {
 
     /****************************** Init Plumbing *****************************/
 
+
     // Init IPC
     if ((err = ipc_init()) != ESP_OK) {
-        ESP_LOGE("MAIN", "Couldn't initialize IPC queues: %s", E2S(err));
+        ESP_LOGE("MAIN", "Couldn't initialize IPC queues");
         return;
     }
 
 	// Start BLE
     if ((err = ble_init()) != ESP_OK) {
-        ESP_LOGE("MAIN", "Couldn't initialize BLE handler: %s", E2S(err));
+        ESP_LOGE("MAIN", "Couldn't initialize BLE handler");
         return;
     }
 
@@ -168,21 +169,21 @@ void app_main (void) {
      * We pin Sample task to Core 1
     */
 
-	// Launch BLE task (default priority - core 0)
+	// Launch BLE task (default priority - core 0 or PROTOCOL CPU)
     if (xTaskCreatePinnedToCore(task_ble_manager, "BLE Manager", 
         STACK_SIZE_BLE_MANAGER, NULL, tskIDLE_PRIORITY, NULL, 0x0) != pdPASS) {
         ESP_LOGE("MAIN", "Couldn't register BLE task");
         return;
     }
 
-    // Launch EKG task
+    // Launch EKG task (pinned to core 0x0 or PROTOCOL CPU)
     if (xTaskCreatePinnedToCore(task_ekg_manager, "EKG Manager", 
         STACK_SIZE_EKG_MANAGER, NULL, tskIDLE_PRIORITY, NULL, 0x0) != pdPASS) {
         ESP_LOGE("MAIN", "Couldn't register Telemetry task");
         return;
     }
 
-    // Launch Sample task (highest priority - core 1)
+    // Launch Sample task (highest priority - core 1 or APP CPU)
     if (xTaskCreatePinnedToCore(task_sample_manager, "Sample Manager",
         STACK_SIZE_SAMPLE_MANAGER, NULL, 0, NULL, 0x1) != pdPASS) {
         ESP_LOGE("MAIN", "Couldn't register Sample task");

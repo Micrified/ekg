@@ -203,6 +203,13 @@ esp_err_t ble_init (void) {
     // Create Bluetooth controller configuration struct with default settings
     esp_bt_controller_config_t btc_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
 
+    // Release memory used for classic BT
+    if ((err = esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT))
+     != ESP_OK) {
+     	ESP_LOGE("BLE-Driver", "Initialization failed: %s", E2S(err));
+     	goto end;
+    }
+
     // Initialize the controller (cfg has stack-size, priority, and baud rate)
     if ((err = esp_bt_controller_init(&btc_cfg)) != ESP_OK) {
     	ESP_LOGE("BLE-Driver", "Initialization failed: %s", E2S(err));
@@ -210,7 +217,7 @@ esp_err_t ble_init (void) {
     }
 
     // Enable controller in BLE mode (dual is ESP_BT_MODE_BTDM)
-    if ((err = esp_bt_controller_enable(ESP_BT_MODE_BTDM)) != ESP_OK) {
+    if ((err = esp_bt_controller_enable(ESP_BT_MODE_BLE)) != ESP_OK) {
         ESP_LOGE("BLE-Driver", "Enable BLE mode failed: %s", E2S(err));
         goto end;
     }
@@ -550,6 +557,7 @@ static void gap_event_handler (esp_gap_ble_cb_event_t event,
     esp_ble_gap_cb_param_t *param) {
 	esp_err_t err;
 
+	ESP_LOGI("BLE-Driver", "GAP event: %d", event);
 	switch (event) {
 
 		// Event toggled when advertising data is set
@@ -570,7 +578,7 @@ static void gap_event_handler (esp_gap_ble_cb_event_t event,
 					"Couldn't set advertising parameters: %s", E2S(err));
             }
 
-            ESP_LOGD("BLE-Driver", "GAP advertising setup complete");
+            ESP_LOGI("BLE-Driver", "GAP advertising setup complete");
 		}
 		break;
 
@@ -601,7 +609,7 @@ static void gap_event_handler (esp_gap_ble_cb_event_t event,
             if (param->adv_start_cmpl.status != ESP_BT_STATUS_SUCCESS) {
             	ESP_LOGE("BLE-Driver", "GAP advertising failed to start");
             } else {
-            	ESP_LOGD("BLE-Driver", "GAP advertising started");
+            	ESP_LOGI("BLE-Driver", "GAP advertising started");
             }
         }
         break;
@@ -609,13 +617,13 @@ static void gap_event_handler (esp_gap_ble_cb_event_t event,
 
         // Event triggered if the connection parameters were updated 
         case ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT: {
-            // ESP_LOGD("BLE-Driver", "Connection parameters updated");
+            ESP_LOGI("BLE-Driver", "Connection parameters updated");
         }
         break;
 
 
 		default: {
-			ESP_LOGD("BLE-Driver", "Unknown GAP event: %d", event);
+			ESP_LOGW("BLE-Driver", "Unknown GAP event: %d", event);
 		}
 		break;
 	}
@@ -625,21 +633,21 @@ static void gap_event_handler (esp_gap_ble_cb_event_t event,
 // GATTs Event Handler
 static void gatts_event_handler (esp_gatts_cb_event_t event, 
     esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
-	int i;
+	int i, cb_count = 0;
 
 	ESP_LOGD("BLE-Driver", "GATTS Event: %s", g_gatts_event_str[event]);
 
     // If its a registration event - we register the interface for the profile
     if (event == ESP_GATTS_REG_EVT) {
 
-    	// If registration failed, output an error
-    	if (param->reg.status != ESP_GATT_OK) {
+    	// If successful registration, save interface in the table.
+    	if (param->reg.status == ESP_GATT_OK) {
+    		g_profile_table[param->reg.app_id].gatts_if = gatts_if;
+    	} else {
     		ESP_LOGE("BLE-Driver", "GATTS Event: Profile registration failed");
-    		return;
     	}
 
-    	// Otherwise save the interface in the table
-    	g_profile_table[param->reg.app_id].gatts_if = gatts_if;
+    	return;
     }
 
 
@@ -659,10 +667,15 @@ static void gatts_event_handler (esp_gatts_cb_event_t event,
 
     	// Forward event to profile callback
     	g_profile_table[i].gatts_cb(event, gatts_if, param);
+
+    	// Increment count
+    	cb_count++;
     }
 
     // If it belonged to no profile - issue a warning
-    ESP_LOGW("BLE-Driver", "GATTS Event: Event is unhandled");
+    if (cb_count == 0) {
+    	ESP_LOGW("BLE-Driver", "GATTS Event: Event is unhandled");
+    }
 }
 
 
