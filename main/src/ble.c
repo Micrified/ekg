@@ -37,7 +37,7 @@ static void gatts_event_handler (esp_gatts_cb_event_t, esp_gatt_if_t,
 
 
 // Profile event-handler for WiFi
-static void gatts_profile_event_handler_wifi (esp_gatts_cb_event_t,
+static void gatts_profile_event_handler (esp_gatts_cb_event_t,
     esp_gatt_if_t, esp_ble_gatts_cb_param_t *);
 
 
@@ -82,7 +82,7 @@ static const char *g_gatts_event_str[] = {
 
 
 // Internal Bit-field marking progression of advertising configuration setup
-static uint8_t g_adv_config_status;
+static uint8_t g_adv_config_status = 0x0;
 
 
 // The service UUID that is used the GAP advertising data and scan response
@@ -152,8 +152,8 @@ static esp_ble_adv_params_t g_adv_parameters = {
 
 // Table of Application Profiles (Add your limited application profile here)
 static struct gatts_profile_t g_profile_table[APP_PROFILE_COUNT] = {
-    [APP_PROFILE_WIFI] = {
-        .gatts_cb = gatts_profile_event_handler_wifi,
+    [APP_PROFILE_MAIN] = {
+        .gatts_cb = gatts_profile_event_handler,
         .gatts_if = ESP_GATT_IF_NONE,
     },
 };
@@ -171,11 +171,11 @@ static uint8_t char_str_wifi[] = {0x11,0x22,0x33};
 
 
 // A property bit-field for the SSID characteristic
-esp_gatt_char_prop_t wifi_property;
+static esp_gatt_char_prop_t wifi_property = 0;
 
 
 // A permissions bit-field for the SSID characteristic
-esp_gatt_perm_t wifi_permissions;
+static esp_gatt_perm_t wifi_permissions = 0;
 
 
 // The characteristic value for the SSID
@@ -186,8 +186,8 @@ static esp_attr_value_t gatts_wifi_char_ssid_value = (esp_attr_value_t) {
 };
 
 
-// Local variable describing the WiFi SSID buffer
-prepare_type_env_t wifi_message_buffer;
+// Local variable describing the App characteristic buffer
+prepare_type_env_t app_message_buffer;
 
 
 /*
@@ -251,7 +251,7 @@ esp_err_t ble_init (void) {
     /*************************************************************************/
 
     // Register Application Profile: WiFi
-    if ((err = esp_ble_gatts_app_register(APP_PROFILE_WIFI)) != ESP_OK) {
+    if ((err = esp_ble_gatts_app_register(APP_PROFILE_MAIN)) != ESP_OK) {
     	ESP_LOGE("BLE-Driver", "Register WiFi Application Profile failed: %s", 
     		E2S(err));
         goto end;
@@ -275,7 +275,7 @@ end:
 
 esp_err_t ble_send (size_t len, uint8_t *buffer) {
 	esp_err_t err = ESP_OK;
-	struct gatts_profile_t *p = g_profile_table + APP_PROFILE_WIFI;
+	struct gatts_profile_t *p = g_profile_table + APP_PROFILE_MAIN;
 
 	// Check for null buffer pointer
 	if (buffer == NULL) {
@@ -299,6 +299,18 @@ esp_err_t ble_send (size_t len, uint8_t *buffer) {
 		BLE_RSP_MSG_MAX_SIZE * sizeof(uint8_t),
 		buffer_out,
 		false)) != ESP_OK) {
+		ESP_LOGE("BLE-Driver", "Couldn't send GATTS notification: %s", 
+			E2S(err));
+	}
+
+	// Attempt to send as notification (because we set no confirm)
+	if ((err = esp_ble_gatts_send_indicate(
+		p->gatts_if,
+		p->conn_id,
+		p->descr_handle,
+		BLE_RSP_MSG_MAX_SIZE * sizeof(uint8_t),
+		buffer_out,
+		true)) != ESP_OK) {
 		ESP_LOGE("BLE-Driver", "Couldn't send GATTS notification: %s", 
 			E2S(err));
 	}
@@ -366,46 +378,56 @@ static esp_ble_conn_update_params_t *gatts_set_connection_parameters
     return &connection_parameters;
 }
 
-
-// Dispatches an indicate (a notification) to a GATT client if needed
-static void gatts_send_indicate_response (esp_gatt_if_t gatts_if, 
+// Handles writes to the characteristic descriptor
+static void gatts_char_descr_write_handler (esp_gatt_if_t gatts_if,
 	esp_ble_gatts_cb_param_t *param, esp_gatt_char_prop_t char_property,
 	uint8_t profile) {
-	esp_err_t err;
-    bool needs_confirm = false;
 
 	// Response data must be less than the MTU size
 	uint8_t data_notify[BLE_RSP_MSG_MAX_SIZE] = {0};
     uint8_t data_indicate[BLE_RSP_MSG_MAX_SIZE] = {0};
     uint8_t *data_out = NULL;
+    bool confirm = false;
 
-	// Reconstruct the mode flag for notifications
-	uint16_t mode = param->write.value[1] << 8 | param->write.value[0];
+	// Extract the characteristic descriptor value
+	uint16_t descr_value = (param->write.value[1] << 8) | (param->write.value[0]);
 
-	// Handle received mode type
-	switch (mode) {
-		case 0: return;                       // Send no response - exit
-		case 1: data_out = data_notify;       // Send response without confirm
-				break;
-		case 2: needs_confirm = true;         // Send response with confirm
+	// Handle it
+	switch (descr_value) {
+		case 0x00: {
+			ESP_LOGI("BLE-Driver", "GATTS Profile: Notify/Indicate Disabled!");
+			data_out = NULL;
+		}
+		break;
+		case 0x01: {
+			if (char_property & ESP_GATT_CHAR_PROP_BIT_NOTIFY) {
+				ESP_LOGI("BLE-Driver", "GATTS Profile: Notify Enabled!");
+				data_out = data_notify;
+				confirm = false;
+			}
+		}
+		break;
+		case 0x02: {
+			if (char_property & ESP_GATT_CHAR_PROP_BIT_INDICATE) {
+				ESP_LOGI("BLE-Driver", "GATTS Profile: Indicate Enabled!");
 				data_out = data_indicate;
-                break;
-		default:                              // Unrecognized response mode
-			ESP_LOGE("BLE-Driver", "Received an unknown descriptor mode (%u)",
-				mode);
-			return;
+				confirm = true;
+			}
+		}
+		break;
+		default: {
+			ESP_LOGE("BLE-Driver", "GATTS Profile: Unknown descriptor value!");
+			esp_log_buffer_hex("BLE-Driver", param->write.value, param->write.len);
+		}
+		break;
 	}
 
-	// Dispatch response
-	if ((err = esp_ble_gatts_send_indicate(
-		gatts_if, 
-		param->write.conn_id,
-		g_profile_table[profile].descr_handle, // Updates go in descr
-		BLE_RSP_MSG_MAX_SIZE * sizeof(uint8_t),
-		data_out,
-        needs_confirm)) != ESP_OK) {
-		ESP_LOGE("BLE-Driver", "Couldn't send indicate/notify response: %s",
-			E2S(err));
+	// Respond
+	if (data_out != NULL) {
+        esp_ble_gatts_send_indicate(gatts_if, param->write.conn_id, 
+        	g_profile_table[profile].char_handle, 
+        	BLE_RSP_MSG_MAX_SIZE * sizeof(uint8_t),
+        	 data_out, confirm);
 	}
 }
 
@@ -557,7 +579,6 @@ static void gap_event_handler (esp_gap_ble_cb_event_t event,
     esp_ble_gap_cb_param_t *param) {
 	esp_err_t err;
 
-	ESP_LOGI("BLE-Driver", "GAP event: %d", event);
 	switch (event) {
 
 		// Event toggled when advertising data is set
@@ -576,6 +597,7 @@ static void gap_event_handler (esp_gap_ble_cb_event_t event,
 				!= ESP_OK) {
 				ESP_LOGE("BLE-Driver", 
 					"Couldn't set advertising parameters: %s", E2S(err));
+				break;
             }
 
             ESP_LOGI("BLE-Driver", "GAP advertising setup complete");
@@ -635,7 +657,7 @@ static void gatts_event_handler (esp_gatts_cb_event_t event,
     esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
 	int i, cb_count = 0;
 
-	ESP_LOGD("BLE-Driver", "GATTS Event: %s", g_gatts_event_str[event]);
+	ESP_LOGI("BLE-Driver", "GATTS Event: %s", g_gatts_event_str[event]);
 
     // If its a registration event - we register the interface for the profile
     if (event == ESP_GATTS_REG_EVT) {
@@ -645,9 +667,8 @@ static void gatts_event_handler (esp_gatts_cb_event_t event,
     		g_profile_table[param->reg.app_id].gatts_if = gatts_if;
     	} else {
     		ESP_LOGE("BLE-Driver", "GATTS Event: Profile registration failed");
+    		return;
     	}
-
-    	return;
     }
 
 
@@ -687,9 +708,10 @@ static void gatts_event_handler (esp_gatts_cb_event_t event,
 
 
 // Handler for events concerning the GATTS WiFi profile
-static void gatts_profile_event_handler_wifi (esp_gatts_cb_event_t event,
+static void gatts_profile_event_handler (esp_gatts_cb_event_t event,
     esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
     esp_err_t err;
+
 
     switch (event) {
 
@@ -697,22 +719,30 @@ static void gatts_profile_event_handler_wifi (esp_gatts_cb_event_t event,
         case ESP_GATTS_REG_EVT: {
 
             // Set as primary service ID
-            g_profile_table[APP_PROFILE_WIFI].service_id.is_primary = true;
+            g_profile_table[APP_PROFILE_MAIN].service_id.is_primary = true;
 
             // The instance ID distinguishes multiple services with same ID.
             // Since we have only one service, it gets ID 0
-            g_profile_table[APP_PROFILE_WIFI].service_id.id.inst_id = 0;
+            g_profile_table[APP_PROFILE_MAIN].service_id.id.inst_id = 0;
 
             // Set the length of the ID
-            g_profile_table[APP_PROFILE_WIFI].service_id.id.uuid.len = 
+            g_profile_table[APP_PROFILE_MAIN].service_id.id.uuid.len = 
             	ESP_UUID_LEN_16;
 
             // Set the UUID value.
-            g_profile_table[APP_PROFILE_WIFI].service_id.id.uuid.uuid.uuid16 = 
-            	GATTS_SERVICE_UUID_WIFI;
+            g_profile_table[APP_PROFILE_MAIN].service_id.id.uuid.uuid.uuid16 = 
+            	GATTS_SERVICE_UUID;
 
             // Set the device name
-            esp_ble_gap_set_device_name(BLE_DEVICE_NAME);
+            if ((err = esp_ble_gap_set_device_name(BLE_DEVICE_NAME)) 
+            	!= ESP_OK) {
+            	ESP_LOGE("BLE-Driver", "GATTS Profile: Couldn't set name: %s",
+            		E2S(err));
+            	break;
+            } else {
+            	ESP_LOGI("BLE-Driver", "GATTS Profile: Device name is: %s",
+            		BLE_DEVICE_NAME);
+            }
 
             // Configure the advertising data
             if ((err = esp_ble_gap_config_adv_data(&g_advertising_data)) 
@@ -739,15 +769,16 @@ static void gatts_profile_event_handler_wifi (esp_gatts_cb_event_t event,
 
 			// Attempt to create the service and attribute table
 			if ((err = esp_ble_gatts_create_service(gatts_if, 
-				&g_profile_table[APP_PROFILE_WIFI].service_id,
+				&g_profile_table[APP_PROFILE_MAIN].service_id,
 				GATTS_HANDLE_COUNT_WIFI)) != ESP_OK) {
 				ESP_LOGE("BLE-Driver", 
 					"GATTS Profile: Failed to set profile attribute table: %s", 
 					E2S(err));
+				break;
 			}
 
-			ESP_LOGD("BLE-Driver", "GATTS Profile: Service ID: %u", 
-				g_profile_table[APP_PROFILE_WIFI].service_id.id.uuid.uuid.uuid16);
+			ESP_LOGI("BLE-Driver", "GATTS Profile Event : Service ID: %u", 
+				g_profile_table[APP_PROFILE_MAIN].service_id.id.uuid.uuid.uuid16);
 		}
 		break;
 
@@ -756,19 +787,19 @@ static void gatts_profile_event_handler_wifi (esp_gatts_cb_event_t event,
 		case ESP_GATTS_CREATE_EVT: {
 
             // Set the service handle
-            g_profile_table[APP_PROFILE_WIFI].service_handle = 
+            g_profile_table[APP_PROFILE_MAIN].service_handle = 
             	param->create.service_handle;
 
             // Set the characteristic UUID length
-            g_profile_table[APP_PROFILE_WIFI].char_uuid.len = ESP_UUID_LEN_16;
+            g_profile_table[APP_PROFILE_MAIN].char_uuid.len = ESP_UUID_LEN_16;
 
             // Set the UUID for the characteristic
-            g_profile_table[APP_PROFILE_WIFI].char_uuid.uuid.uuid16 = 
-                GATTS_CHARACTERISTIC_UUID_WIFI;
+            g_profile_table[APP_PROFILE_MAIN].char_uuid.uuid.uuid16 = 
+                GATTS_CHARACTERISTIC_UUID;
 
 			// Try starting the service
             if ((err = esp_ble_gatts_start_service(
-            	g_profile_table[APP_PROFILE_WIFI].service_handle)) != ESP_OK) {
+            	g_profile_table[APP_PROFILE_MAIN].service_handle)) != ESP_OK) {
             	ESP_LOGE("BLE-Driver", "GATTS Profile: Couldn't start service: %s", 
             		E2S(err));
             	break;
@@ -785,8 +816,8 @@ static void gatts_profile_event_handler_wifi (esp_gatts_cb_event_t event,
 
             // Add the characteristic; set Attribute Response Control
             if ((err = esp_ble_gatts_add_char(
-            	g_profile_table[APP_PROFILE_WIFI].service_handle,
-            	&g_profile_table[APP_PROFILE_WIFI].char_uuid,
+            	g_profile_table[APP_PROFILE_MAIN].service_handle,
+            	&g_profile_table[APP_PROFILE_MAIN].char_uuid,
             	wifi_permissions,
             	wifi_property,
             	&gatts_wifi_char_ssid_value,
@@ -821,16 +852,16 @@ static void gatts_profile_event_handler_wifi (esp_gatts_cb_event_t event,
 			}
 
             // Set the characteristic descriptor UUID length
-            g_profile_table[APP_PROFILE_WIFI].descr_uuid.len = ESP_UUID_LEN_16;
+            g_profile_table[APP_PROFILE_MAIN].descr_uuid.len = ESP_UUID_LEN_16;
 
             // Set the UUID for the characteristic descriptor
-            g_profile_table[APP_PROFILE_WIFI].descr_uuid.uuid.uuid16 = 
-            	GATTS_CHARACTERISTIC_DESCRIPTOR_UUID_WIFI;
+            g_profile_table[APP_PROFILE_MAIN].descr_uuid.uuid.uuid16 = 
+            	GATTS_CHARACTERISTIC_DESCRIPTOR_UUID;
 
 		    // Add the characteristic descriptor if characteristic established
             if ((err = esp_ble_gatts_add_char_descr(
-            	g_profile_table[APP_PROFILE_WIFI].service_handle,
-            	&g_profile_table[APP_PROFILE_WIFI].descr_uuid,
+            	g_profile_table[APP_PROFILE_MAIN].service_handle,
+            	&g_profile_table[APP_PROFILE_MAIN].descr_uuid,
             	wifi_permissions,
             	NULL,	// Initial value for characteristic descriptor
             	NULL	// Auto response parameter
@@ -851,13 +882,13 @@ static void gatts_profile_event_handler_wifi (esp_gatts_cb_event_t event,
         		"GATTS Profile: Characterisic descriptor added");
 
 			// Update the descriptor handle in the table
-        	g_profile_table[APP_PROFILE_WIFI].descr_handle = 
+        	g_profile_table[APP_PROFILE_MAIN].descr_handle = 
         		param->add_char_descr.attr_handle;
         	
             // Log the UUID for the descriptor and status
             ESP_LOGD("BLE-Driver", "GATTS Profile: Status = %d, Value = %X\n", 
             	param->add_char.status,
-            	g_profile_table[APP_PROFILE_WIFI].descr_uuid.uuid.uuid16);
+            	g_profile_table[APP_PROFILE_MAIN].descr_uuid.uuid.uuid16);
         }
         break;
 
@@ -867,7 +898,7 @@ static void gatts_profile_event_handler_wifi (esp_gatts_cb_event_t event,
 
             // Connection parameters are offloaded and set here
             esp_ble_conn_update_params_t *conn_p = 
-            	gatts_set_connection_parameters(param, APP_PROFILE_WIFI);
+            	gatts_set_connection_parameters(param, APP_PROFILE_MAIN);
 
 			// Apply update to connection parameters
 			if ((err = esp_ble_gap_update_conn_params(conn_p)) != ESP_OK) {
@@ -920,33 +951,26 @@ static void gatts_profile_event_handler_wifi (esp_gatts_cb_event_t event,
 
         // Event tripped by WRITE operation: Implemented if auto-resp is NULL
         case ESP_GATTS_WRITE_EVT: {
-
-        	/* Two kinds of write-requests
-        	 * 1. Write Characteristic Value:      (1 MTU ~= 23 bytes)
-        	 * 2. Write Long Characteristic Value: (? MTU ~= ?? bytes)
-        	 * Request type (2) takes several messages to transmit and receive
-        	 * and to confirm it you must perfrom an executive write request
-        	 *
-        	 * Some messages also require notification or indication which
-        	 * is handled first below
-        	*/
         	
 
-        	// Send an indication if (1) not a long write (2) is descr message
+        	// Intercept writes to the descriptor handle
         	if (param->write.is_prep == 0 && 
-        		g_profile_table[APP_PROFILE_WIFI].descr_handle == param->write.handle &&
+        		g_profile_table[APP_PROFILE_MAIN].descr_handle == param->write.handle &&
         		param->write.len == 2
         		) {
-        		ESP_LOGD("BLE-Driver", "GATTS Profile: Notifications enabled");
+        		ESP_LOGW("BLE-Driver", 
+        			"GATTS Profile: WRITE_EVT to Characteristic Descriptor");
+
+
         		// This is sent for a specific characteristic
-        		gatts_send_indicate_response(gatts_if, param, wifi_property, 
-        			APP_PROFILE_WIFI);
+        		gatts_char_descr_write_handler(gatts_if, param, wifi_property, 
+        			APP_PROFILE_MAIN);
         	} else {
-        		ESP_LOGD("BLE-Driver", "GATTS Profile: Notifications disabled");
+        		ESP_LOGW("BLE-Driver", "GATTS Profile: WRITE_EVT to Characteristic");
         	}
 
         	// Invoke the handler for write-events (characteristic specific)
-        	gatts_write_event_handler(gatts_if, &wifi_message_buffer, 
+        	gatts_write_event_handler(gatts_if, &app_message_buffer, 
         		param);
         }
         break;
@@ -968,7 +992,36 @@ static void gatts_profile_event_handler_wifi (esp_gatts_cb_event_t event,
         	}
 
         	// Invoke executive write function (long write ended)
-        	gatts_write_exec_handler(&wifi_message_buffer, param);
+        	gatts_write_exec_handler(&app_message_buffer, param);
+        }
+        break;
+
+
+        // Event tripped by a notify/indicate action
+        case ESP_GATTS_CONF_EVT: {
+
+        	if (param->conf.status == ESP_GATT_OK) {
+        		ESP_LOGI("BLE-Driver", 
+        			"GATTS Profile: ESP_GATTS_CONF_EVT okay!");
+        	} else {
+        		ESP_LOGE("BLE-Driver", 
+        			"GATTS Profile: ESP_GATTS_CONF_EVT error (%X)!", 
+        			param->conf.status);
+        		esp_log_buffer_hex("BLE-Driver", param->conf.value, param->conf.len);
+        	}
+        }
+        break;
+
+        // Event tripped when a GATT response completes
+        case ESP_GATTS_RESPONSE_EVT: {
+        	if (param->rsp.status == ESP_GATT_OK) {
+        		ESP_LOGI("BLE-Driver", "GATTS Profile: ESP_GATTS_RESPONSE_EVT okay!");
+        	} else {
+
+        		// See Documentation for the error, which is type: esp_gatt_status_t
+        		ESP_LOGE("BLE-Driver", 
+        			"GATTS Profile: ESP_GATTS_RESPONSE_EVT error (%x)!", param->rsp.status);
+        	}
         }
         break;
 

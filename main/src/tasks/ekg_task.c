@@ -69,7 +69,11 @@ static void send_sample (uint16_t amplitude, uint16_t rr_period, uint8_t lab) {
 	// Enqueue message for transmission
 	if (ipc_enqueue(g_ble_tx_queue, 0x0, z, buffer) != ESP_OK) {
 		ESP_LOGE("EKG", "Problem pushing message data!");
+		return;
 	}
+
+	// Otherwise notify the BLE Manager to send it
+	xEventGroupSetBits(g_event_group, FLAG_BLE_SEND_MSG);
 
 	return;
 }

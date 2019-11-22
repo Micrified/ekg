@@ -32,13 +32,13 @@
 #define GATTS_HANDLE_COUNT_WIFI                     4
 
 // The UUID of the service in the app application profile
-#define GATTS_SERVICE_UUID_WIFI                     0x00FF
+#define GATTS_SERVICE_UUID                          0x00FF
 
 // The UUID for the app characteristic
-#define GATTS_CHARACTERISTIC_UUID_WIFI              0xFF01
+#define GATTS_CHARACTERISTIC_UUID                   0xFF01
 
 // The UUID for the app characteristic descriptor (using the standard CCCD type)
-#define GATTS_CHARACTERISTIC_DESCRIPTOR_UUID_WIFI   \
+#define GATTS_CHARACTERISTIC_DESCRIPTOR_UUID   \
 	ESP_GATT_UUID_CHAR_CLIENT_CONFIG
 
 // Describes the maximum buffer size for a write-event handler (+1 for null t?)
