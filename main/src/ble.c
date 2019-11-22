@@ -303,18 +303,6 @@ esp_err_t ble_send (size_t len, uint8_t *buffer) {
 			E2S(err));
 	}
 
-	// Attempt to send as notification (because we set no confirm)
-	if ((err = esp_ble_gatts_send_indicate(
-		p->gatts_if,
-		p->conn_id,
-		p->descr_handle,
-		BLE_RSP_MSG_MAX_SIZE * sizeof(uint8_t),
-		buffer_out,
-		true)) != ESP_OK) {
-		ESP_LOGE("BLE-Driver", "Couldn't send GATTS notification: %s", 
-			E2S(err));
-	}
-
 	return err;
 }
 
