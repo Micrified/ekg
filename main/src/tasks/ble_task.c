@@ -111,18 +111,6 @@ void msg_handler (uint8_t *buffer, size_t size) {
     }
 }
 
-// Global variables holding the normal wave training data set
-extern uint16_t g_n_periods[20];
-extern uint16_t g_n_amplitudes[20];
-
-// Global variables holding the atrial wave training data set
-extern uint16_t g_a_periods[10];
-extern uint16_t g_a_amplitudes[10];
-
-// Global variables holding the ventrical wave training data set
-extern uint16_t g_v_periods[10];
-extern uint16_t g_v_amplitudes[10];
-
 
 /*
  *******************************************************************************
@@ -157,7 +145,6 @@ void task_ble_manager (void *args) {
         	state &= ~0x1;
 
             // Clear the transmit queue (?)
-
         }
 
         // If received a message, check the type and perform action on it
@@ -182,7 +169,8 @@ void task_ble_manager (void *args) {
         // If a message is pending to be sent: Acquire and send message
         if (flags & FLAG_BLE_SEND_MSG) {
 
-            // Only send if connected
+
+            // If connected, then dequeue and send ...
             if (state & 0x1) {
 
                 // While there are messages to process
@@ -204,9 +192,16 @@ void task_ble_manager (void *args) {
                             "Couldn't send message: %s", E2S(err));
                     }                   
                 }
+            } else {
 
+                // Discard message if capacity is reached
+                if (uxQueueMessagesWaiting(g_ble_tx_queue) >= TASK_QUEUE_CAPACITY) {
 
+                    // Don't really care about the return value
+                    xQueueReceive(g_ble_tx_queue, (void *)&queue_msg, TASK_QUEUE_MAX_TICKS);
+                }
             }
+
         }
 
     } while (1);

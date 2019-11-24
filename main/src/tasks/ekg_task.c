@@ -20,7 +20,7 @@ static uint16_t g_local_sample_buffer[DEVICE_SENSOR_PUSH_BUF_SIZE];
 
 // Type describing the labels that can be ascribed to samples
 typedef enum {
-	SAMPLE_LABEL_UNKNOWN,
+	SAMPLE_LABEL_UNKNOWN = 0x0,
 	SAMPLE_LABEL_NORMAL,
 	SAMPLE_LABEL_ATRIAL,
 	SAMPLE_LABEL_VENTRICAL
@@ -116,8 +116,11 @@ void task_ekg_manager (void *args) {
 		gpio_set_level(LED_PIN, 0);
 
 		// Wait indefinitely for a flag to be set (clear all automatically)
-		flags = xEventGroupWaitBits(g_event_group, MASK_EKG_FLAGS, pdTRUE,
+		flags = xEventGroupWaitBits(g_event_group, MASK_EKG_FLAGS | FLAG_BLE_DISCONNECTED, pdFALSE,
 			pdFALSE, portMAX_DELAY);
+
+        // Clear the EKG flags
+        xEventGroupClearBits(g_event_group, MASK_EKG_FLAGS);
 
 		// If the configuration flag is set: Update local configuration
 		if (flags & FLAG_EKG_CONFIGURE) {

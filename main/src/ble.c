@@ -345,28 +345,6 @@ void notify_event_group (size_t size, void *buffer) {
 */
 
 
-// Establishes connection parameters when invoked in ESP_GATTS_CONNECT_EVT
-static esp_ble_conn_update_params_t *gatts_set_connection_parameters 
-	(esp_ble_gatts_cb_param_t *param,uint8_t profile) {
-
-    // Connection parameters (static so pseudo-global)
-	static esp_ble_conn_update_params_t connection_parameters = {
-		.min_int = 16,    // x1.25ms = 20ms
-		.max_int = 32,    // x1.25ms = 40ms
-		.latency = 0,
-		.timeout = 400,   // x10ms = 4000ms
-	};
-
-    // Copy in the device address field
-    memcpy(connection_parameters.bda, param->connect.remote_bda, 
-        sizeof(esp_bd_addr_t));
-
-    // Update connection ID 
-    g_profile_table[profile].conn_id = param->connect.conn_id;
-
-    return &connection_parameters;
-}
-
 // Handles writes to the characteristic descriptor
 static void gatts_char_descr_write_handler (esp_gatt_if_t gatts_if,
 	esp_ble_gatts_cb_param_t *param, esp_gatt_char_prop_t char_property,
@@ -893,15 +871,8 @@ static void gatts_profile_event_handler (esp_gatts_cb_event_t event,
         // Event triggered when someone connects to the GATT server
         case ESP_GATTS_CONNECT_EVT: {
 
-            // Connection parameters are offloaded and set here
-            esp_ble_conn_update_params_t *conn_p = 
-            	gatts_set_connection_parameters(param, APP_PROFILE_MAIN);
-
-			// Apply update to connection parameters
-			if ((err = esp_ble_gap_update_conn_params(conn_p)) != ESP_OK) {
-				ESP_LOGE("BLE-Driver", 
-					"Couldn't update connection parameters: %s", E2S(err));
-			}
+        	// Update connection ID 
+			g_profile_table[APP_PROFILE_MAIN].conn_id = param->connect.conn_id;
 
         	// Note: Only needs to be done ONCE for ALL PROFILES
         	ESP_LOGI("BLE-Driver", "GATTS Profile: Connect event");
@@ -1024,6 +995,11 @@ static void gatts_profile_event_handler (esp_gatts_cb_event_t event,
         }
         break;
 
+        // Event tripped by closure of GATT server
+        case ESP_GATTS_CLOSE_EVT: {
+        	ESP_LOGW("BLE-Driver", "GATTS Profile: ESP_GATTS_CLOSE_EVT!");
+        }
+        break;
 
         // Event tripped by a disconnection
         case ESP_GATTS_DISCONNECT_EVT: {
