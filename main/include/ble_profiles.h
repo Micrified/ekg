@@ -24,17 +24,17 @@
 */
 
 
-// The number of handles inside the WiFi profile (four because they are)
+// The number of handles inside the App profile (four because they are)
 // 1. Service handle
-// 2. Characteristic handle
+// 2. Characteristic declaration handle
 // 3. Characteristic value handle
 // 4. Characteristic descriptor handle
-#define GATTS_HANDLE_COUNT_WIFI                     4
+#define GATTS_HANDLE_COUNT                          4
 
 // The UUID of the service in the app application profile
 #define GATTS_SERVICE_UUID                          0x00FF
 
-// The UUID for the app characteristic
+// The UUID for the app characteristic value
 #define GATTS_CHARACTERISTIC_UUID                   0xFF01
 
 // The UUID for the app characteristic descriptor (using the standard CCCD type)
@@ -85,13 +85,6 @@ typedef struct {
  *******************************************************************************
 */
 
-// TODO: See if we want a single characteristic buffer
-
-// The size of the data in the characteristic value
-//size_t g_characteristic_value_len;
-
-// This buffer holds the single characteristic value of the WiFi profile
-//uint8_t g_characteristic_value_wifi[GATTS_WRITE_EVENT_MAX_BUF_SIZE];
 
 
 
