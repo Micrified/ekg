@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include "esp_system.h"
 #include "esp_log.h"
+#include "classifier.h"
 
 /* A message has the following structure
  * 
