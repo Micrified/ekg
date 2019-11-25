@@ -35,7 +35,7 @@
 
 
 // Maximum queue element data size
-#define TASK_QUEUE_DATA_MAX         128
+#define TASK_QUEUE_DATA_MAX         256
 
 
 // Maximum number of queue elements a queue can hold

@@ -83,7 +83,7 @@
 
 
 // Stack size (words) for the BLE task
-#define STACK_SIZE_BLE_MANAGER          2048
+#define STACK_SIZE_BLE_MANAGER          4096
 
 
 // Stack size (words) for the EKG task
