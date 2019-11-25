@@ -73,7 +73,7 @@
 // Enumeration of supported Application Profiles
 enum {
 	/*************************************************************************/
-	APP_PROFILE_WIFI,
+	APP_PROFILE_MAIN,
 
 	/*************************************************************************/
 	// The number of application profiles (do not remove)

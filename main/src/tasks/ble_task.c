@@ -12,18 +12,18 @@
 void instruction_handler (uint8_t instruction) {
     switch (instruction) {
 
-        case INST_EKG_SAMPLE: {
-            xEventGroupSetBits(g_event_group, FLAG_EKG_SAMPLE);
+        case INST_EKG_START: {
+            xEventGroupSetBits(g_event_group, FLAG_EKG_START);
         }
         break;
 
-        case INST_EKG_MONITOR: {
-            xEventGroupSetBits(g_event_group, FLAG_EKG_MONITOR);
+        case INST_EKG_STOP: {
+            xEventGroupSetBits(g_event_group, FLAG_EKG_STOP);
         }
         break;
 
-        case INST_EKG_IDLE: {
-            xEventGroupSetBits(g_event_group, FLAG_EKG_IDLE);
+        case INST_EKG_CONFIGURE: {
+            xEventGroupSetBits(g_event_group, FLAG_EKG_CONFIGURE);
         }
         break;
 
@@ -58,6 +58,23 @@ void msg_handler (uint8_t *buffer, size_t size) {
 
             // Take action on the message type
             instruction_handler(inst);
+        }
+        break;
+
+
+        // Message with configuration data
+        case MSG_TYPE_CONFIGURATION: {
+
+            // Set the threshold comparator
+            g_cfg_comp = msg.body.msg_configuration.cfg_comp;
+
+            // Set the threshold value
+            g_cfg_val = msg.body.msg_configuration.cfg_val;
+
+            // Log for debugging
+            ESP_LOGI("BLE", "Buffered Config: (cfg_comp = %X, cfg_val = %u)",
+                g_cfg_comp, g_cfg_val);
+
         }
         break;
 
@@ -97,18 +114,6 @@ void msg_handler (uint8_t *buffer, size_t size) {
     }
 }
 
-// Global variables holding the normal wave training data set
-extern uint16_t g_n_periods[20];
-extern uint16_t g_n_amplitudes[20];
-
-// Global variables holding the atrial wave training data set
-extern uint16_t g_a_periods[10];
-extern uint16_t g_a_amplitudes[10];
-
-// Global variables holding the ventrical wave training data set
-extern uint16_t g_v_periods[10];
-extern uint16_t g_v_amplitudes[10];
-
 
 /*
  *******************************************************************************
@@ -143,7 +148,6 @@ void task_ble_manager (void *args) {
         	state &= ~0x1;
 
             // Clear the transmit queue (?)
-
         }
 
         // If received a message, check the type and perform action on it
@@ -168,7 +172,8 @@ void task_ble_manager (void *args) {
         // If a message is pending to be sent: Acquire and send message
         if (flags & FLAG_BLE_SEND_MSG) {
 
-            // Only send if connected
+
+            // If connected, then dequeue and send ...
             if (state & 0x1) {
 
                 // While there are messages to process
@@ -190,9 +195,16 @@ void task_ble_manager (void *args) {
                             "Couldn't send message: %s", E2S(err));
                     }                   
                 }
+            } else {
 
+                // Discard message if capacity is reached
+                if (uxQueueMessagesWaiting(g_ble_tx_queue) >= TASK_QUEUE_CAPACITY) {
 
+                    // Don't really care about the return value
+                    xQueueReceive(g_ble_tx_queue, (void *)&queue_msg, TASK_QUEUE_MAX_TICKS);
+                }
             }
+
         }
 
     } while (1);

@@ -12,16 +12,17 @@
 size_t g_msg_size_tab[MSG_TYPE_MAX] = {
     [MSG_TYPE_STATUS]          = 1,           // 1B status
     [MSG_TYPE_TRAIN_DATA]      = 160,         // 2 * (40 + 20 + 20)
-    [MSG_TYPE_SAMPLE_DATA]     = 2 + 2,       // 2B amplitude & period
-    [MSG_TYPE_INSTRUCTION]     = 1,           // 1B instruction
+    [MSG_TYPE_SAMPLE_DATA]     = 1 + 2 + 2,   // 1B label + 2B (amp/period)
+    [MSG_TYPE_INSTRUCTION]     = 1,           // 1B inst
+    [MSG_TYPE_CONFIGURATION]   = 1 + 2,       // 1B comp, 2B value
 };
 
 
 // Update this table as new messages are introduced or removed
 const char *g_inst_str_tab[INST_TYPE_MAX] = {
-	[INST_EKG_SAMPLE] = "INST_EKG_SAMPLE",
-	[INST_EKG_MONITOR] = "INST_EKG_MONITOR",
-	[INST_EKG_IDLE] = "INST_EKG_IDLE",
+	[INST_EKG_STOP]      = "INST_EKG_STOP",
+	[INST_EKG_START]     = "INST_EKG_START",
+	[INST_EKG_CONFIGURE] = "INST_EKG_CONFIGURE"
 };
 
 
@@ -82,6 +83,9 @@ size_t pack_msg_train_data (msg_t *msg, uint8_t *buffer) {
 size_t pack_msg_sample_data (msg_t *msg, uint8_t *buffer) {
 	size_t z = 0;
 
+	// Pack the label
+	buffer[z++] = (msg->body.msg_sample.label);
+
 	// Pack the amplitude
 	buffer[z++] = (msg->body.msg_sample.amplitude >> 0) & 0xFF;
 	buffer[z++] = (msg->body.msg_sample.amplitude >> 8) & 0xFF;
@@ -100,6 +104,21 @@ size_t pack_msg_instruction (msg_t *msg, uint8_t *buffer) {
 
 	// Pack the instruction
 	buffer[z++] = msg->body.msg_instruction.inst;
+
+	return z;
+}
+
+
+// Packs a Configuration data message
+size_t pack_msg_configuration (msg_t *msg, uint8_t *buffer) {
+	size_t z = 0;
+
+	// Pack the comparator
+	buffer[z++] = msg->body.msg_configuration.cfg_comp;
+
+	// Pack the threshold
+	buffer[z++] = (msg->body.msg_configuration.cfg_val >> 0) & 0xFF;
+	buffer[z++] = (msg->body.msg_configuration.cfg_val >> 8) & 0xFF;
 
 	return z;
 }
@@ -160,7 +179,12 @@ void unpack_msg_train_data (msg_t *msg, uint8_t *buffer) {
 // Unpacks the sample data
 void unpack_msg_sample_data (msg_t *msg, uint8_t *buffer) {
 	size_t offset = 0;
+	uint8_t label;
 	uint16_t amplitude, period;
+
+	// Unpack the label
+	label = buffer[offset++];
+	msg->body.msg_sample.label = label;
 
 	// Unpack the amplitude
 	amplitude = buffer[offset++]; amplitude <<= 8;
@@ -180,10 +204,25 @@ void unpack_msg_instruction (msg_t *msg, uint8_t *buffer) {
 	uint8_t inst = 0;
 
 	// Unpack the instruction
-	inst = buffer[offset];
-
-	// Assign instruction to message
+	inst = buffer[offset++];
 	msg->body.msg_instruction.inst = inst;
+}
+
+
+// Unpacks a Configuration data message
+void unpack_msg_configuration (msg_t *msg, uint8_t *buffer) {
+	size_t offset = 0;
+	uint8_t cfg_comp = 0;
+	uint16_t cfg_val = 0;
+
+	// Unpack the comparator
+	cfg_comp = buffer[offset++];
+	msg->body.msg_configuration.cfg_comp = cfg_comp;
+
+	// Unpack the threshold
+	cfg_val = buffer[offset++]; cfg_val <<= 8;
+	cfg_val |= buffer[offset++];
+	msg->body.msg_configuration.cfg_val = cfg_val;
 }
 
 
@@ -226,6 +265,11 @@ size_t msg_pack (msg_t *msg, uint8_t *buffer) {
 
 		case MSG_TYPE_INSTRUCTION: {
 			z += pack_msg_instruction(msg, buffer + z);
+		}
+		break;
+
+		case MSG_TYPE_CONFIGURATION: {
+			z += pack_msg_configuration(msg, buffer + z);
 		}
 		break;
 
@@ -285,6 +329,11 @@ esp_err_t msg_unpack (msg_t *msg, uint8_t *buffer, size_t len) {
 
 		case MSG_TYPE_INSTRUCTION: {
 			unpack_msg_instruction(&msg_cpy, buffer + offset);
+		}
+		break;
+
+		case MSG_TYPE_CONFIGURATION: {
+			unpack_msg_configuration(&msg_cpy, buffer + offset);
 		}
 		break;
 

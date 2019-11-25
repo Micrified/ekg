@@ -6,6 +6,9 @@
 		},
 		{
 			"path": "/Users/Owatch/Documents/Somnox/esp-idf"
+		},
+		{
+			"path": "/Users/Owatch/Documents/Somnox/gatt_server"
 		}
 	]
 }

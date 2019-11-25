@@ -45,7 +45,7 @@
 #define DEVICE_BLE_LED_PIN              19
 
 // Pin for reading EKG voltage
-#define DEVICE_EKG_PIN					ADC1_CHANNEL_5
+#define DEVICE_EKG_PIN					ADC2_CHANNEL_6
 
 
 /*
@@ -64,10 +64,15 @@
  * stalled less to update the buffer, but also means data will become available
  * less often. 
  */
-#define DEVICE_SENSOR_PUSH_BUF_SIZE     128
+#define DEVICE_SENSOR_PUSH_BUF_SIZE     256
+
 
 // The threshold, at or over which, readings are considered to be R peaks
-#define DEVICE_R_PEAK_THRESHOLD         1200
+#define DEVICE_R_PEAK_THRESHOLD         2450
+
+
+// The threshold, at or which under, readings are considered to be R dips
+#define DEVICE_R_DIP_THRESHOLD          930
 
 
 /*
