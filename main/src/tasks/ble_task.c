@@ -71,7 +71,10 @@ void msg_handler (uint8_t *buffer, size_t size) {
             // Set the threshold value
             g_cfg_val = msg.body.msg_configuration.cfg_val;
 
-            // We don't automatically notify - an instruction can do that
+            // Log for debugging
+            ESP_LOGI("BLE", "Buffered Config: (cfg_comp = %X, cfg_val = %u)",
+                g_cfg_comp, g_cfg_val);
+
         }
         break;
 

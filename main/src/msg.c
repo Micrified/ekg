@@ -220,8 +220,8 @@ void unpack_msg_configuration (msg_t *msg, uint8_t *buffer) {
 	msg->body.msg_configuration.cfg_comp = cfg_comp;
 
 	// Unpack the threshold
-	cfg_val = buffer[offset]++; cfg_val <<= 8;
-	cfg_val |= buffer[offset]++;
+	cfg_val = buffer[offset++]; cfg_val <<= 8;
+	cfg_val |= buffer[offset++];
 	msg->body.msg_configuration.cfg_val = cfg_val;
 }
 

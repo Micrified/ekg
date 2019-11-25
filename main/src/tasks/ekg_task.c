@@ -82,9 +82,9 @@ static void send_sample (uint16_t amplitude, uint16_t rr_period, uint8_t lab) {
 // Configurable peak detector. Returns nonzero on peak, else zero
 static int isPeak (uint16_t value, uint8_t comp, uint16_t threshold) {
 	if (comp) {
-		return (value <= threshold);
+		return (value <= threshold);   // comp != 0x0 -> LTE
 	} else {
-		return (value >= threshold);
+		return (value >= threshold);   // comp == 0x0 -> GTE
 	}
 }
 

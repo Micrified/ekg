@@ -128,8 +128,8 @@ typedef struct {
 
 // Structure describing a configuration message
 typedef struct {
-    uint8_t  cfg_comp;           // Holds a comparator flag
-    uint16_t cfg_val;            // Holds a comparator value
+    uint8_t  cfg_comp;           // Comparator flag (0x0 = GTE, 0x1 = LTE)
+    uint16_t cfg_val;            // Comparator value 
 } msg_configuration_data_t;
 
 
