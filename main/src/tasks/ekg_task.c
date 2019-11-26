@@ -10,6 +10,18 @@
 // The local sample buffer
 static uint16_t g_local_sample_buffer[DEVICE_SENSOR_PUSH_BUF_SIZE];
 
+// Local variables holding the normal wave training data set
+static uint16_t g_local_n_periods[20];
+static uint16_t g_local_n_amplitudes[20];
+
+// Local variables holding the atrial wave training data set
+static uint16_t g_local_a_periods[10];
+static uint16_t g_local_a_amplitudes[10];
+
+// Local variables holding the ventrical wave training data set
+static uint16_t g_local_v_periods[10];
+static uint16_t g_local_v_amplitudes[10];
+
 
 /*
  *******************************************************************************
@@ -110,6 +122,23 @@ void task_ekg_manager (void *args) {
 		if (flags & FLAG_EKG_CONFIGURE) {
 			cfg_comp = g_cfg_comp;
 			cfg_val  = g_cfg_val;
+			memcpy(g_local_n_periods,    g_n_periods,    20 * sizeof(uint16_t));
+			memcpy(g_local_n_amplitudes, g_n_amplitudes, 20 * sizeof(uint16_t));
+			memcpy(g_local_a_periods,    g_a_periods,    10 * sizeof(uint16_t));
+			memcpy(g_local_a_amplitudes, g_a_amplitudes, 10 * sizeof(uint16_t));
+			memcpy(g_local_v_periods,    g_v_periods,    10 * sizeof(uint16_t));
+			memcpy(g_local_v_amplitudes, g_v_amplitudes, 10 * sizeof(uint16_t));
+
+			// DEBUG: Log the training data
+            for (int i = 0; i < 20; ++i) {
+                printf("Normal: period = %u amplitude = %u\n", g_local_n_periods[i], g_local_n_amplitudes[i]);
+            }
+            for (int i = 0; i < 10; ++i) {
+            	printf("Atrial: period = %u amplitude = %u\n", g_local_a_periods[i], g_local_a_amplitudes[i]);
+            }
+            for (int i = 0; i < 10; ++i) {
+            	printf("Ventrical: period = %u amplitude = %u\n", g_local_v_periods[i], g_local_v_amplitudes[i]);
+            }
 		}
 
 		// If the start flag is set: Enable relaying

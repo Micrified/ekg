@@ -293,7 +293,10 @@ esp_err_t msg_unpack (msg_t *msg, uint8_t *buffer, size_t len) {
 	size_t offset = 3;
 
 	// Length must be at least 3 bytes: [Head,Head,Type]
-	if (len < 3) return ESP_ERR_INVALID_SIZE;
+	if (len < 3) {
+		printf("size check 1: %u < 3\n", len);
+		return ESP_ERR_INVALID_SIZE;
+	}
 
 	// Check header
 	if (buffer[0] != MSG_BYTE_HEAD || buffer[1] != MSG_BYTE_HEAD) {
@@ -307,6 +310,7 @@ esp_err_t msg_unpack (msg_t *msg, uint8_t *buffer, size_t len) {
 
 	// Check if enough data remains to parse the type
 	if (g_msg_size_tab[msg_cpy.type] > (len - offset)) {
+		printf("size check 2: %u > %u\n", g_msg_size_tab[msg_cpy.type], (len - offset));
 		return ESP_ERR_INVALID_SIZE;
 	}
 

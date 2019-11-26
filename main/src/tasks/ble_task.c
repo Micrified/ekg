@@ -81,7 +81,8 @@ void msg_handler (uint8_t *buffer, size_t size) {
 
         // Message with training data
         case MSG_TYPE_TRAIN_DATA: {
-
+            ESP_LOGI("BLE", "Training Data Received!");
+            
             // Install normal training data
             memcpy(g_n_periods, msg.body.msg_train.n_periods, 
                 20 * sizeof(uint16_t));
