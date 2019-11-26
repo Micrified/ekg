@@ -39,11 +39,25 @@
 #define 	K_VALUE                                    4
 
 
+// Global variables holding the normal wave training data set
+extern uint16_t g_n_periods[20];
+extern uint16_t g_n_amplitudes[20];
+
+// Global variables holding the atrial wave training data set
+extern uint16_t g_a_periods[10];
+extern uint16_t g_a_amplitudes[10];
+
+// Global variables holding the ventrical wave training data set
+extern uint16_t g_v_periods[10];
+extern uint16_t g_v_amplitudes[10];
+
+
 /*
  *******************************************************************************
  *                              Type Definitions                               *
  *******************************************************************************
 */
+
 
 // Type describing the labels that can be ascribed to samples
 typedef enum {

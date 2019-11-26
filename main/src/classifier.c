@@ -22,8 +22,9 @@ double calculate_distance (uint16_t amplitude_1, uint16_t rr_period_1,
 }
 
 
-// COmparator function to sort by increasing order of distance 
-int compare (const void * s1, const void * s2) { 
+// Comparator function to sort by increasing order of distance 
+int compare (const void * s1, const void * s2) {
+
 	neighbor_t *n1 = (neighbor_t *) s1;
 	neighbor_t *n2 = (neighbor_t *) s2;
 
@@ -41,6 +42,7 @@ void get_neighbors (uint16_t amplitude, uint16_t rr_period, neighbor_t* neighbor
 
     // Calculate distance with each neighbor
     for (i = 0; i < 40; i++) {
+
 		// Get a neighbor's amplitude, period, and label
 		if (i >= 0 && i < 20) {
 			n_amplitude = g_n_amplitudes[i];
