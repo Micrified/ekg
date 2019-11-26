@@ -22,8 +22,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 #include "esp_system.h"
 #include "esp_log.h"
+#include "ekg_task.h"
 
 
 /*
@@ -32,9 +34,6 @@
  *******************************************************************************
 */
 
-
-// Size of the training sample, the smaller the faster
-#define 	TRAINING_SAMPLE_SIZE                       10
 
 // Value for K of the KNN classifier
 #define 	K_VALUE                                    4
@@ -46,35 +45,40 @@
  *******************************************************************************
 */
 
-
-// Structure describing a sample
-typedef struct {
-    uint16_t amplitude;
-    uint16_t period;
-    label_type_t label;
-    float distance;
-} sample_t;
-
-
-// Types of label
+// Type describing the labels that can be ascribed to samples
 typedef enum {
-    LABEL_A = 0,
-    LABEL_N,
-    LABEL_V,
-    LABEL_NONE
-} label_t;
+	SAMPLE_LABEL_UNKNOWN = 0x0,
+	SAMPLE_LABEL_NORMAL,
+	SAMPLE_LABEL_ATRIAL,
+	SAMPLE_LABEL_VENTRICAL
+} sample_label_t;
 
 
-// Structure defining a point, for comparison with other points
+// Structure describing a neighbor
 typedef struct {
-    sample_t sample;
+    sample_label_t label;
     float distance;
-} point_t;
+} neighbor_t;
 
 
-// Structures defining data arrays
-sample_t training_set_A[TRAINING_SAMPLE_SIZE]
-sample_t training_set_N[TRAINING_SAMPLE_SIZE]
-sample_t training_set_V[TRAINING_SAMPLE_SIZE]
+/*
+ *******************************************************************************
+ *                            Function Declarations                            *
+ *******************************************************************************
+*/
 
 
+/* @brief Classifies a sample using the KNN method.
+ *
+ * @note Sets of samples cannot be empty.
+ *
+ * @param
+ * - amplitude : Amplitude of the new sample to be classified.
+ * - rr_period : RR period of the new sample to be classified.
+ *
+ * @return Label of the new sample
+*/
+sample_label_t classify (uint16_t amplitude, uint16_t rr_period);
+
+
+#endif

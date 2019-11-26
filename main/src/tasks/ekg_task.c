@@ -13,32 +13,16 @@ static uint16_t g_local_sample_buffer[DEVICE_SENSOR_PUSH_BUF_SIZE];
 
 /*
  *******************************************************************************
- *                          Internal Type Definitions                          *
- *******************************************************************************
-*/
-
-
-// Type describing the labels that can be ascribed to samples
-typedef enum {
-	SAMPLE_LABEL_UNKNOWN = 0x0,
-	SAMPLE_LABEL_NORMAL,
-	SAMPLE_LABEL_ATRIAL,
-	SAMPLE_LABEL_VENTRICAL
-} sample_label_t;
-
-
-/*
- *******************************************************************************
  *                        Internal Function Definitions                        *
  *******************************************************************************
 */
-
 
 // Classifies a sample
 static sample_label_t classify_knn (uint16_t amplitude, uint16_t rr_period) {
 	sample_label_t label = SAMPLE_LABEL_UNKNOWN;
 
 	// TODO: Implement Sonnya's KNN here
+	label = classify(amplitude, rr_period);
 
 	return label;
 }

@@ -29,6 +29,7 @@
 #include "tasks.h"
 #include "ipc.h"
 #include "config.h"
+#include "classifier.h"
 
 
 /*
